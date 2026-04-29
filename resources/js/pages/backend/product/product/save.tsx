@@ -167,6 +167,10 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
     const [pricingRetail, setPricingRetail] = useState<number>(record?.retail_price ?? 0)
     const [pricingWholesale, setPricingWholesale] = useState<number>(record?.wholesale_price ?? 0)
     const [pricingTiers, setPricingTiers] = useState<Array<{ min_quantity: number; max_quantity: number | null; price: number }>>(record?.pricing_tiers || [])
+    const [pricing6h, setPricing6h] = useState<number>(record?.price_6h ?? 0)
+    const [pricing1d, setPricing1d] = useState<number>(record?.price_1d ?? 0)
+    const [pricing3d, setPricing3d] = useState<number>(record?.price_3d ?? 0)
+    const [deposit, setDeposit] = useState<string>(record?.deposit ?? '')
     const [tagsDefault, setTagsDefault] = useState<string[]>(record?.tags || [])
     const taxPriceIncludes = !!tax?.price_includes_tax
 
@@ -283,6 +287,10 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
         setLowStockAlert(record.low_stock_alert ?? 0)
         setPricingRetail(record.retail_price ?? 0)
         setPricingWholesale(record.wholesale_price ?? 0)
+        setPricing6h(record.price_6h ?? 0)
+        setPricing1d(record.price_1d ?? 0)
+        setPricing3d(record.price_3d ?? 0)
+        setDeposit(record.deposit ?? '')
         setPricingTiers(record.pricing_tiers || [])
         setTagsDefault(record.tags || [])
         // Warehouse stocks: always use data from database if available
@@ -628,7 +636,11 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                                 onLoadDemo={isEdit ? undefined : handleLoadDemo}
                                             />
 
-                                            {/* Thông tin cơ bản - second */}
+                                            {/* Sections hidden per user request:
+                                                - Basic Info
+                                                - Album
+                                            */}
+                                            {/* 
                                             <CustomCard
                                                 isShowHeader={true}
                                                 title="Thông tin cơ bản"
@@ -641,6 +653,7 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                                     errors={errors}
                                                 />
                                             </CustomCard>
+                                            */}
 
                                             {/* Giá sản phẩm - third */}
                                             <CustomCard
@@ -651,18 +664,32 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                                 <PricingSection
                                                     retailPrice={pricingRetail}
                                                     wholesalePrice={pricingWholesale}
+                                                    price6h={pricing6h}
+                                                    price1d={pricing1d}
+                                                    price3d={pricing3d}
+                                                    deposit={deposit}
                                                     pricingTiers={pricingTiers}
                                                     applyTax={record?.apply_tax}
                                                     forceTaxIncluded={taxPriceIncludes}
                                                     errors={errors}
                                                 />
                                             </CustomCard>
+
+                                            {/* 
                                             <CustomAlbum
                                                 data={images}
                                                 onDataChange={handleAlbumImagesChange}
                                             />
+                                            */}
 
-                                            {/* Thông tin kho - chỉ hiển thị nếu không có variants */}
+                                            {/* Sections hidden per user request:
+                                                - Inventory/Stock
+                                                - Shipping
+                                                - Attributes
+                                                - Variants
+                                                - SEO
+                                            */}
+                                            {/* 
                                             {(!variants || variants.length === 0) ? (
                                                 <CustomCard
                                                     isShowHeader={true}
@@ -752,7 +779,6 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                                 </CustomCard>
                                             )}
 
-                                            {/* Vận chuyển */}
                                             <CustomCard
                                                 isShowHeader={true}
                                                 title="Vận chuyển"
@@ -761,14 +787,12 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                                 <ShippingInfo />
                                             </CustomCard>
 
-                                            {/* Thuộc tính */}
                                             <AttributesSection
                                                 attributes={attributes}
                                                 onAttributesChange={setAttributes}
                                                 errors={errors}
                                             />
 
-                                            {/* Phiên bản */}
                                             <VariantsSection
                                                 variants={variants}
                                                 onVariantsChange={setVariants}
@@ -780,8 +804,8 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                                 managementType={managementType}
                                             />
 
-                                            {/* SEO - Collapsible */}
                                             <SeoSection record={record} errors={errors} />
+                                            */}
 
                                             {/* Sticky save buttons at bottom */}
                                             <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50">
@@ -830,6 +854,8 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                                     value={productCatalogueId}
                                                     onValueChange={setProductCatalogueId}
                                                 />
+                                                {/* Hidden per user request: Brand and Secondary Categories */}
+                                                {/* 
                                                 <div className="mb-[20px]">
                                                     <Label className="font-normal mb-2 block">Thương hiệu</Label>
                                                     <Combobox
@@ -860,6 +886,7 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                                         placeholder="Chọn Danh Mục Phụ"
                                                     />
                                                 </div>
+                                                */}
                                             </CustomCard>
 
                                             <CustomCard
@@ -872,6 +899,7 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                                 />
                                             </CustomCard>
 
+                                            {/* 
                                             <CustomCard
                                                 isShowHeader={true}
                                                 title="Cấu hình chung"
@@ -885,7 +913,10 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                                     initialImageObjectFit={record?.image_object_fit}
                                                 />
                                             </CustomCard>
+                                            */}
 
+                                            {/* Tags, Sales Channel, and SEO info hidden per user request */}
+                                            {/* 
                                             <CustomCard
                                                 isShowHeader={true}
                                                 title="Tag"
@@ -929,6 +960,7 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                             >
                                                 <CustomSeoScores />
                                             </CustomCard>
+                                            */}
 
                                         </div>
                                     </div>

@@ -3,284 +3,144 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use App\Models\Product;
+use App\Models\ProductCatalogue;
+use App\Models\Language;
+use App\Models\Router;
 use Illuminate\Support\Str;
-use App\Models\User;
-use App\Models\ProductBatch;
-use App\Models\ProductWarehouseStock;
-use App\Services\Interfaces\Product\ProductServiceInterface;
+use Illuminate\Support\Facades\DB;
 
 class ProductSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
+    public function run()
     {
-        /** @var User|null $user */
-        $user = User::query()->where('email', env('GRANT_PERMS_EMAIL', 'chandanv1010@gmail.com'))->first()
-            ?: User::query()->first();
-        if (!$user) {
-            $this->command?->warn('No users found, skipping ProductSeeder.');
-            return;
-        }
+        $languageId = 1; // Tiếng Việt
+        $userId = 1;
 
-        Auth::login($user);
+        $categories = [
+            'Canon' => [
+                'CANON M10',
+                'CANON G7X II',
+                'CANON R50',
+                'CANON M50'
+            ],
+            'Sony' => [
+                'SONY ZV1'
+            ],
+            'DJI' => [
+                'DJI POCKET 3',
+                'DJI MINI 4 PRO'
+            ],
+            'FUJI' => [
+                'FUJI XT100',
+                'FUJI XT200',
+                'FUJI XA3',
+                'FUJI XA5',
+                'FUJI XT30',
+                'FUJI XM5',
+                'FUJI XS10',
+                'FUJI XS20',
+                'FUJI X100V',
+                'FUJI X100VI'
+            ]
+        ];
 
-        $catalogueIds = DB::table('product_catalogues')->pluck('id')->toArray();
-        $brandIds = DB::table('product_brands')->pluck('id')->toArray();
-        $warehouseIds = DB::table('warehouses')->pluck('id')->toArray();
+        DB::beginTransaction();
+        try {
+            foreach ($categories as $catName => $products) {
+                // Create Category
+                $catalogue = ProductCatalogue::create([
+                    'parent_id' => 0,
+                    'publish' => 2,
+                    'user_id' => $userId,
+                    'order' => 0,
+                ]);
 
-        if (empty($catalogueIds)) {
-            $this->command->warn('No product catalogues found. Please run ProductCatalogueSeeder first.');
-            return;
-        }
+                $catSlug = Str::slug($catName);
+                $catalogue->languages()->attach($languageId, [
+                    'name' => $catName,
+                    'canonical' => $catSlug,
+                    'meta_title' => $catName,
+                    'meta_keyword' => $catName,
+                    'meta_description' => $catName,
+                ]);
 
-        if (empty($warehouseIds)) {
-            $this->command->warn('No warehouses found. Please run WarehouseSeeder first.');
-            return;
-        }
+                // Create Router for Category
+                Router::create([
+                    'routerable_type' => ProductCatalogue::class,
+                    'routerable_id' => $catalogue->id,
+                    'canonical' => $catSlug,
+                    'language_id' => $languageId,
+                    'module' => 'product_catalogues',
+                    'next_component' => 'ProductCataloguePage',
+                    'controller' => 'App\Http\Controllers\Frontend\Product\ProductCatalogueController',
+                ]);
 
-        /** @var ProductServiceInterface $productService */
-        $productService = app(ProductServiceInterface::class);
-
-        $this->command?->info("Seeding 200 products with various cases...");
-
-        // Case distribution:
-        // 1-80: Basic products (no variant, no batch) - 40%
-        // 81-140: Basic products with variants - 30%
-        // 141-170: Batch products (no variant) - 15%
-        // 171-190: Batch products with variants - 10%
-        // 191-200: IMEI products - 5%
-
-        for ($i = 1; $i <= 200; $i++) {
-            $seed = (int) (microtime(true) * 1000) + $i;
-
-            // Determine product type
-            $managementType = 'basic';
-            $hasVariants = false;
-            $caseType = '';
-
-            if ($i <= 80) {
-                // Basic products (no variant, no batch)
-                $managementType = 'basic';
-                $hasVariants = false;
-                $caseType = 'BASIC';
-            } elseif ($i <= 140) {
-                // Basic products with variants
-                $managementType = 'basic';
-                $hasVariants = true;
-                $caseType = 'BASIC-VARIANT';
-            } elseif ($i <= 170) {
-                // Batch products (no variant)
-                $managementType = 'batch';
-                $hasVariants = false;
-                $caseType = 'BATCH';
-            } elseif ($i <= 190) {
-                // Batch products with variants
-                $managementType = 'batch';
-                $hasVariants = true;
-                $caseType = 'BATCH-VARIANT';
-            } else {
-                // IMEI products
-                $managementType = 'imei';
-                $hasVariants = false;
-                $caseType = 'IMEI';
-            }
-
-            $variantMode = ($i % 3) + 1; // 1..3
-
-            $name = sprintf('[%s] Sản phẩm %03d', $caseType, $i);
-            $canonical = 'san-pham-' . Str::slug($caseType) . '-' . $i . '-' . $seed;
-
-            $album = [
-                "https://picsum.photos/seed/{$seed}/800/800",
-                "https://picsum.photos/seed/" . ($seed + 1) . "/800/800",
-                "https://picsum.photos/seed/" . ($seed + 2) . "/800/800",
-            ];
-
-            $retail = (float) (rand(50, 500) * 1000);
-            $wholesale = (float) (max(0, $retail - rand(5, 50) * 1000));
-            $cost = (float) (max(0, $wholesale - rand(5, 30) * 1000));
-
-            $attributes = [];
-            $variants = [];
-
-            if ($hasVariants) {
-                // Modes:
-                // 1) few variants (1 attribute, 2 values => 2)
-                // 2) medium (2 attrs, 2x2 => 4)
-                // 3) many (2 attrs, 3x3 => 9)
-                if ($variantMode === 1) {
-                    $attributes = [
-                        ['id' => (string) $seed . '-a', 'name' => 'Màu', 'values' => ['Đỏ', 'Xanh']],
-                    ];
-                } elseif ($variantMode === 2) {
-                    $attributes = [
-                        ['id' => (string) $seed . '-a', 'name' => 'Màu', 'values' => ['Đỏ', 'Xanh']],
-                        ['id' => (string) $seed . '-b', 'name' => 'Size', 'values' => ['S', 'M']],
-                    ];
-                } else {
-                    $attributes = [
-                        ['id' => (string) $seed . '-a', 'name' => 'Màu', 'values' => ['Đỏ', 'Xanh', 'Đen']],
-                        ['id' => (string) $seed . '-b', 'name' => 'Size', 'values' => ['S', 'M', 'L']],
-                    ];
-                }
-
-                // Build combinations
-                $combos = [[]];
-                foreach ($attributes as $attr) {
-                    $next = [];
-                    foreach ($combos as $combo) {
-                        foreach ($attr['values'] as $val) {
-                            $c = $combo;
-                            $c[$attr['name']] = $val;
-                            $next[] = $c;
-                        }
-                    }
-                    $combos = $next;
-                }
-
-                foreach ($combos as $idx => $attrsMap) {
-                    $vRetail = $retail + rand(-5, 20) * 1000;
-                    $vWholesale = $wholesale + rand(-5, 10) * 1000;
-                    $vCost = $cost + rand(-5, 10) * 1000;
-
-                    $variants[] = [
-                        'id' => (string) $seed . '-' . $idx,
-                        'sku' => "SP-{$i}-V" . str_pad((string) ($idx + 1), 3, '0', STR_PAD_LEFT),
-                        'barcode' => (string) rand(100000000000, 999999999999),
-                        'retail_price' => (float) max(0, $vRetail),
-                        'wholesale_price' => (float) max(0, $vWholesale),
-                        'cost_price' => (float) max(0, $vCost),
-                        'stock_quantity' => rand(0, 150),
-                        'image' => $album[$idx % count($album)],
-                        'album' => $album,
-                        'attributes' => $attrsMap,
-                    ];
-                }
-            }
-
-            $warehouseStocks = [];
-            if (count($warehouseIds) && $managementType === 'basic') {
-                // For basic products, add warehouse stocks
-                $warehouseStocks[] = [
-                    'warehouse_id' => $warehouseIds[0],
-                    'stock_quantity' => rand(0, 300),
-                    'storage_location' => 'A-' . rand(1, 20) . '-' . rand(1, 50),
+                $pricingMap = [
+                    'FUJI XT100' => [150, 200, 450],
+                    'FUJI XT200' => [200, 250, 600],
+                    'FUJI XA3' => [100, 150, 350],
+                    'FUJI XA5' => [150, 200, 450],
+                    'FUJI XT30' => [250, 300, 700],
+                    'FUJI XM5' => [250, 300, 700],
+                    'FUJI XS10' => [300, 400, 900],
+                    'FUJI XS20' => [350, 450, 1050],
+                    'FUJI X100V' => [350, 450, 1050],
+                    'FUJI X100VI' => [450, 600, 1400],
+                    'CANON M10' => [100, 150, 350],
+                    'CANON G7X II' => [200, 250, 600],
+                    'CANON R50' => [300, 400, 900],
+                    'CANON M50' => [200, 250, 600],
+                    'SONY ZV1' => [200, 250, 600],
+                    'DJI POCKET 3' => [350, 450, 1050],
+                    'DJI MINI 4 PRO' => [400, 550, 1300],
                 ];
-            }
 
-            $tiers = [];
-            if ($i % 2 === 0) {
-                $tiers = [
-                    ['min_quantity' => 2, 'max_quantity' => 9, 'price' => max(0, $wholesale - 5000)],
-                    ['min_quantity' => 10, 'max_quantity' => null, 'price' => max(0, $wholesale - 15000)],
-                ];
-            }
+                foreach ($products as $prodName) {
+                    $prices = $pricingMap[$prodName] ?? [0, 0, 0];
+                    
+                    // Create Product
+                    $product = Product::create([
+                        'product_catalogue_id' => $catalogue->id,
+                        'publish' => 2,
+                        'user_id' => $userId,
+                        'order' => 0,
+                        'sku' => strtoupper(Str::random(8)),
+                        'price_6h' => $prices[0] * 1000,
+                        'price_1d' => $prices[1] * 1000,
+                        'price_3d' => $prices[2] * 1000,
+                        'deposit' => 'Cọc CCCD gắn chip hoặc tiền mặt 2.000.000 VNĐ'
+                    ]);
 
-            $tags = [
-                'Seeder',
-                $hasVariants ? 'Variant' : 'Single',
-                $caseType,
-            ];
+                    $prodSlug = Str::slug($prodName);
+                    $product->languages()->attach($languageId, [
+                        'name' => $prodName,
+                        'canonical' => $prodSlug,
+                        'meta_title' => $prodName,
+                        'meta_keyword' => $prodName,
+                        'meta_description' => $prodName,
+                    ]);
 
-            $payload = [
-                'name' => $name,
-                'canonical' => $canonical,
-                'description' => '<p>Mô tả cho ' . e($name) . ' - Loại: ' . $caseType . '</p>',
-                'content' => '<p>Nội dung chi tiết cho ' . e($name) . '</p>',
-                'product_catalogue_id' => $catalogueIds[array_rand($catalogueIds)],
-                'product_brand_id' => count($brandIds) ? $brandIds[array_rand($brandIds)] : null,
-                'sku' => "SP-{$i}",
-                'barcode' => (string) rand(100000000000, 999999999999),
-                'unit' => 'Cái',
-                'retail_price' => $retail,
-                'wholesale_price' => $wholesale,
-                'cost_price' => $cost,
-                'management_type' => $managementType,
-                'pricing_tiers' => $tiers,
-                'tags' => $tags,
-                'album' => $album,
-                'image' => $album[0],
-                'track_inventory' => ($i % 5 !== 0) ? 1 : 0,
-                'allow_negative_stock' => ($i % 7 === 0) ? 1 : 0,
-                'warehouse_stocks' => $warehouseStocks,
-                'attributes' => $attributes,
-                'variants' => $variants,
-                'save_and_redirect' => '',
-                'apply_tax' => ($i % 2 === 0) ? 1 : 0,
-            ];
+                    // Link to Category
+                    $product->product_catalogues()->attach($catalogue->id);
 
-            try {
-                $created = $productService->save(new Request($payload));
-
-                // If management type is batch, create default batch + optionally some extra batches
-                if ($created && $managementType === 'batch') {
-                    $pid = (int) ($created->id ?? 0);
-                    if ($pid > 0) {
-                        // DEFAULT batch
-                        $defaultBatch = ProductBatch::updateOrCreate(
-                            ['product_id' => $pid, 'code' => 'DEFAULT'],
-                            [
-                                'is_default' => true,
-                                'manufactured_at' => now()->subDays(rand(1, 30))->toDateString(),
-                                'expired_at' => now()->addDays(rand(180, 365))->toDateString(),
-                                'status' => 'active',
-                            ]
-                        );
-                        
-                        // Add stock to batch via product_batch_warehouses
-                        if ($defaultBatch && !empty($warehouseIds)) {
-                            DB::table('product_batch_warehouses')->insertOrIgnore([
-                                'product_batch_id' => $defaultBatch->id,
-                                'warehouse_id' => $warehouseIds[0],
-                                'stock_quantity' => rand(10, 50),
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
-                        }
-
-                        // Extra batches (best-effort)
-                        if ($i % 3 === 0) {
-                            for ($b = 1; $b <= rand(1, 3); $b++) {
-                                $batch = ProductBatch::updateOrCreate(
-                                    ['product_id' => $pid, 'code' => "BATCH-" . str_pad((string) $b, 2, '0', STR_PAD_LEFT)],
-                                    [
-                                        'is_default' => false,
-                                        'manufactured_at' => now()->subDays(rand(1, 180))->toDateString(),
-                                        'expired_at' => now()->addDays(rand(30, 365))->toDateString(),
-                                        'status' => 'active',
-                                    ]
-                                );
-                                
-                                // Add stock to batch via product_batch_warehouses
-                                if ($batch && !empty($warehouseIds)) {
-                                    DB::table('product_batch_warehouses')->insertOrIgnore([
-                                        'product_batch_id' => $batch->id,
-                                        'warehouse_id' => $warehouseIds[0],
-                                        'stock_quantity' => rand(10, 80),
-                                        'created_at' => now(),
-                                        'updated_at' => now(),
-                                    ]);
-                                }
-                            }
-                        }
-                    }
+                    // Create Router for Product
+                    Router::create([
+                        'routerable_type' => Product::class,
+                        'routerable_id' => $product->id,
+                        'canonical' => $prodSlug,
+                        'language_id' => $languageId,
+                        'module' => 'products',
+                        'next_component' => 'ProductDetail',
+                        'controller' => 'App\Http\Controllers\Frontend\Product\ProductController',
+                    ]);
                 }
-            } catch (\Throwable $e) {
-                $this->command?->error("Failed seeding product #{$i}: " . $e->getMessage());
             }
+            DB::commit();
+            $this->command->info('ProductSeeder completed successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->command->error('ProductSeeder failed: ' . $e->getMessage());
         }
-
-        $this->command?->info('✅ Products seeded successfully!');
-        $this->command->info('📊 Distribution:');
-        $this->command->info('   - BASIC (1-80): 40%');
-        $this->command->info('   - BASIC-VARIANT (81-140): 30%');
-        $this->command->info('   - BATCH (141-170): 15%');
-        $this->command->info('   - BATCH-VARIANT (171-190): 10%');
-        $this->command->info('   - IMEI (191-200): 5%');
     }
 }

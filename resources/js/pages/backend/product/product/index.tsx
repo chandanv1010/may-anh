@@ -87,10 +87,7 @@ const pageConfig: PageConfig<Product> = {
         { key: 'checkbox', label: '', className: 'w-[50px]', sortable: false },
         { key: 'id', label: 'ID', className: 'w-[40px]', sortable: true },
         { key: 'info', label: 'Thông tin sản phẩm', className: 'w-[35%]', sortable: false },
-        { key: 'stock', label: 'Có thể bán', className: 'w-[120px] text-center', sortable: false },
         { key: 'order', label: 'Thứ tự', className: 'w-[100px] text-center', sortable: true },
-        { key: 'languages', label: 'Ngôn ngữ', className: 'text-center w-[150px]', sortable: false },
-        { key: 'robots', label: 'Google Index', className: 'text-center w-[120px]', sortable: true },
         { key: 'publish', label: 'Trạng thái', className: 'text-center', sortable: true },
         { key: 'actions', label: 'Thao tác', className: 'w-[120px] text-center', sortable: false },
     ],
@@ -172,41 +169,11 @@ const TableRowComponent = React.memo(({
                     </div>
                 </div>
             </TableCell>
-            {/* Có thể bán - Stock quantity */}
-            <TableCell className="text-center whitespace-nowrap">
-                <div className="flex flex-col items-center">
-                    <span className="text-blue-600 font-medium">{item.stock_quantity ?? 0}</span>
-                    {(item.variant_count ?? 0) > 0 && (
-                        <span className="text-xs text-muted-foreground">({item.variant_count} phiên bản)</span>
-                    )}
-                </div>
-            </TableCell>
             <TableCell className="text-center">
                 <CustomOrderInput
                     id={item.id}
                     module={pageConfig.module || ''}
                     currentValue={item.order}
-                />
-            </TableCell>
-            <TableCell className="text-center">
-                <CustomLanguageFlags 
-                    languages={languages || []}
-                    translatedLanguageIds={item.translated_language_ids || []}
-                    postId={item.id}
-                    module={pageConfig.module || 'product'}
-                />
-            </TableCell>
-            <TableCell className="text-center">
-                <CustomRobotsBadge
-                    robots={robotsValues[item.id] ?? item.robots}
-                    loading={robotsLoading[item.id]}
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        if (!robotsLoading[item.id]) {
-                            const currentValue = robotsValues[item.id] ?? item.robots ?? 'index'
-                            onRobotsChange(item.id, currentValue)
-                        }
-                    }}
                 />
             </TableCell>
             <TableCell className="text-center whitespace-nowrap">

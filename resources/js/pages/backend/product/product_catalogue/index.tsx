@@ -52,9 +52,7 @@ const pageConfig: PageConfig<ProductCatalogue> = {
         { key: 'checkbox', label: '', className: 'w-[60px] text-center' },
         { key: 'id', label: 'ID', className: 'w-[40px] text-center' },
         { key: 'name', label: 'Tên nhóm', className: 'w-[25%]' },
-        { key: 'robots', label: 'Google Index', className: 'text-center w-[120px]' },
         { key: 'order', label: 'Thứ tự', className: 'text-center w-[80px]' },
-        { key: 'languages', label: 'Ngôn ngữ', className: 'text-center' },
         { key: 'creator', label: 'Người tạo', className: 'text-center' },
         { key: 'created_at', label: 'Ngày tạo', className: 'text-center' },
         { key: 'updated_at', label: 'Ngày sửa', className: 'text-center' },
@@ -110,36 +108,12 @@ const TableRowComponent = React.memo(({
             </TableCell>
             <TableCell className="text-center">
                 <div className="flex justify-center">
-                    <CustomRobotsBadge
-                        robots={robotsValues[item.id] ?? item.robots}
-                        loading={robotsLoading[item.id]}
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            if (!robotsLoading[item.id]) {
-                                const currentValue = robotsValues[item.id] ?? item.robots ?? 'index'
-                                onRobotsChange(item.id, currentValue)
-                            }
-                        }}
-                    />
-                </div>
-            </TableCell>
-            <TableCell className="text-center">
-                <div className="flex justify-center">
                     <CustomOrderInput
                         id={item.id}
                         module={pageConfig.module || ''}
                         currentValue={item.order}
                     />
                 </div>
-            </TableCell>
-            <TableCell className="text-center">
-                <CustomLanguageFlags 
-                    languages={languages || []}
-                    translatedLanguageIds={item.translated_language_ids || []}
-                    postId={item.id}
-                    module="product_catalogue"
-                    variant="table"
-                />
             </TableCell>
             <TableCell className="text-center">{item.creators?.name || 'N/A'}</TableCell>
             <TableCell className="text-center">{item.created_at}</TableCell>

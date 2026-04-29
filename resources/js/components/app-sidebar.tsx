@@ -22,11 +22,11 @@ const mainNavItems: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
     },
-    {
+    /* {
         title: 'Đơn Hàng',
         href: '/backend/order',
         icon: ShoppingCart,
-    },
+    }, */
     {
         title: 'Thành Viên',
         href: '#',
@@ -48,7 +48,7 @@ const mainNavItems: NavItem[] = [
         ]
 
     },
-    {
+    /* {
         title: 'Cấu Hình Chung',
         href: '#',
         icon: Settings,
@@ -88,8 +88,8 @@ const mainNavItems: NavItem[] = [
             }
         ]
 
-    },
-    {
+    }, */
+    /* {
         title: 'Bài Viết',
         href: '#',
         icon: Notebook,
@@ -105,7 +105,7 @@ const mainNavItems: NavItem[] = [
             }
         ]
 
-    },
+    }, */
     {
         title: 'Sản Phẩm',
         href: '#',
@@ -124,15 +124,15 @@ const mainNavItems: NavItem[] = [
                 title: 'Thương Hiệu',
                 url: '/backend/product_brand'
             },
-            {
+            /* {
                 title: 'Phiên Bản Sản Phẩm',
                 url: '/backend/product_variant'
-            },
+            }, */
 
         ]
 
     },
-    {
+    /* {
         title: 'Kho',
         href: '#',
         icon: Container,
@@ -154,7 +154,7 @@ const mainNavItems: NavItem[] = [
                 url: '/backend/return-import-order'
             }
         ]
-    },
+    }, */
     {
         title: 'Khách Hàng',
         href: '#',
@@ -170,7 +170,7 @@ const mainNavItems: NavItem[] = [
             }
         ]
     },
-    {
+    /* {
         title: 'Marketing',
         href: '#',
         icon: Tag,
@@ -184,7 +184,7 @@ const mainNavItems: NavItem[] = [
                 url: '/backend/voucher/voucher'
             }
         ]
-    },
+    }, */
     {
         title: 'Sổ Quỹ',
         href: '/backend/cash-book/transaction',
