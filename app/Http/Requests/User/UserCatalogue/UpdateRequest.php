@@ -34,7 +34,7 @@ class UpdateRequest extends FormRequest
                 "string",
                 Rule::unique('user_catalogues')->ignore($this->route('user_catalogue'))
             ],
-            'description' => 'sometimes|string',
+            'description' => 'nullable|string',
             'publish' => 'sometimes|in:1,2'
         ];
     }

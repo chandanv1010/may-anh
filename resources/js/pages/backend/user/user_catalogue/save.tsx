@@ -54,10 +54,19 @@ const getModuleTitle = (module: string): string => {
         'permission': 'Quản lý quyền',
         'user_catalogue': 'Quyền nhóm thành viên',
         'user' : 'Quyền Thành Viên',
-        'log': 'Log Hệ Thống',
-        'post': 'Quản lý Bài Viết',
-        'post_catalogue': 'Quản lý Nhóm Bài Viết',
-        'language': 'Quản lý Ngôn Ngữ'
+        'product': 'Quản lý Sản Phẩm',
+        'product_catalogue': 'Quản lý Nhóm Sản Phẩm',
+        'product_brand': 'Quản lý Thương Hiệu',
+        'product_variant': 'Quản lý Phiên Bản',
+        'customer': 'Quản lý Khách Hàng',
+        'customer_catalogue': 'Quản lý Nhóm Khách Hàng',
+        'order': 'Quản lý Đơn Hàng (Lịch Máy)',
+        'cash_book_transaction': 'Quản lý Giao Dịch',
+        'cash_book_reason': 'Quản lý Loại Phiếu',
+        'promotion': 'Quản lý Khuyến Mãi',
+        'voucher': 'Quản lý Voucher',
+        'setting': 'Cài đặt hệ thống',
+        'log': 'Log Hệ Thống'
     }
 
     return moduleTitle[module] || module
@@ -96,6 +105,16 @@ export default function UserCatalogueSave({record, permissions}: UserCatalogueSa
         if(!permissions) return {}
         const result = permissions.reduce((acc: IGroupPermissions, permission: Permission) => {
             const module = permission.canonical.split(':')[0]
+            
+            // Filter out unnecessary modules
+            const hiddenModules = [
+                'banner', 'slide', 'ckfinder', 'import_order', 'language', 
+                'menu', 'post', 'post_catalogue', 'router', 'setting_tax', 
+                'supplier', 'warehouse', 'widget', 'product_batch'
+            ]
+            
+            if (hiddenModules.includes(module)) return acc
+
             if(!acc[module]){
                 acc[module] = {
                     title: getModuleTitle(module),
@@ -176,10 +195,10 @@ export default function UserCatalogueSave({record, permissions}: UserCatalogueSa
                                     preserveState: setPreserveState,
                                 }}  
                                 action={
-                                    isEdit ? user_catalogue.update(record.id) : user_catalogue.store()
+                                    isEdit ? user_catalogue.update(record.id).url : user_catalogue.store().url
                                 }
                                 method="post"
-                                resetOnSuccess={['name', 'canonical', 'description', 'permissions']}
+                                resetOnSuccess={['name', 'canonical', 'description']}
                                  
                                 transform={(data) => ({ 
                                     ...data,
@@ -205,7 +224,7 @@ export default function UserCatalogueSave({record, permissions}: UserCatalogueSa
                                                         name="name"
                                                         autoFocus
                                                         tabIndex={1}
-                                                        autoComplete=""
+                                                        autoComplete="off"
                                                         placeholder=""
                                                         defaultValue={record?.name}
                                                     />
@@ -217,9 +236,8 @@ export default function UserCatalogueSave({record, permissions}: UserCatalogueSa
                                                         id="canonical"
                                                         type="text"
                                                         name="canonical"
-                                                        autoFocus
                                                         tabIndex={1}
-                                                        autoComplete=""
+                                                        autoComplete="off"
                                                         placeholder=""
                                                         defaultValue={record?.canonical}
                                                     />
@@ -231,12 +249,12 @@ export default function UserCatalogueSave({record, permissions}: UserCatalogueSa
                                                 <Textarea 
                                                     name="description"
                                                     className="h-[168px]"
-                                                    autoFocus
                                                     tabIndex={1}
-                                                    autoComplete=""
+                                                    autoComplete="off"
                                                     placeholder=""
                                                     defaultValue={record?.description}
                                                 />
+                                                <InputError message={errors.description} className="mt-[5px]" />
                                             </div>
                                             
                                             

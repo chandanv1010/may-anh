@@ -29,8 +29,9 @@ class UpdateRequest extends FormRequest
         $sometimes = $method === 'PATCH' ? 'sometimes' : '';
         return [
             'name' => "required|string|{$sometimes}",
-            'description' => 'sometimes|string',
-            'publish' => 'sometimes|in:1,2'
+            'description' => 'nullable|string',
+            'publish' => 'sometimes|in:1,2',
+            'color' => 'nullable|string|max:7',
         ];
     }
 

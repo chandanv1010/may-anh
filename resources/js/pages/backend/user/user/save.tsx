@@ -80,10 +80,10 @@ export default function UserSave({record, userCatalogues}: UserSaveProps) {
                                     preserveState: setPreserveState,
                                 }}  
                                 action={
-                                    isEdit ? user.update(record.id) : user.store()
+                                    isEdit ? user.update(record.id).url : user.store().url
                                 }
                                 method="post"
-                                resetOnSuccess={['name', 'canonical', 'description']}
+                                resetOnSuccess={['name', 'email', 'password', 'password_confirm', 'address', 'description', 'color']}
                                  
                                 transform={(data) => ({ 
                                     ...data,
@@ -110,7 +110,7 @@ export default function UserSave({record, userCatalogues}: UserSaveProps) {
                                                         name="name"
                                                         autoFocus
                                                         tabIndex={1}
-                                                        autoComplete=""
+                                                        autoComplete="off"
                                                         placeholder=""
                                                         defaultValue={record?.name}
                                                     />
@@ -122,14 +122,49 @@ export default function UserSave({record, userCatalogues}: UserSaveProps) {
                                                         id="email"
                                                         type="text"
                                                         name="email"
-                                                        autoFocus
-                                                        tabIndex={1}
-                                                        autoComplete=""
-                                                        placeholder=""
+                                                        tabIndex={2}
+                                                        autoComplete="off"
+                                                        placeholder="example@gmail.com"
                                                         defaultValue={record?.email}
                                                     />
                                                     <InputError message={errors.email} className="mt-[5px]" />
                                                 </div>
+                                            </div>
+
+                                            {/* Color Picker Section */}
+                                            <div className="mb-[20px]">
+                                                <Label className="mb-[10px] block">Màu hiển thị trên lịch</Label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {[
+                                                        '#ef4444', '#991b1b', '#8b5cf6', '#f97316', '#6b7280', 
+                                                        '#d946ef', '#eab308', '#78350f', '#ec4899', '#3b82f6',
+                                                        '#10b981', '#06b6d4', '#6366f1', '#a855f7', '#f43f5e'
+                                                    ].map((color) => (
+                                                        <button
+                                                            key={color}
+                                                            type="button"
+                                                            onClick={() => handleEmitterChange('color', color)}
+                                                            className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${
+                                                                (formDataEmitter.color || record?.color) === color ? 'border-slate-900 scale-110 ring-2 ring-slate-200' : 'border-transparent'
+                                                            }`}
+                                                            style={{ backgroundColor: color }}
+                                                            title={color}
+                                                        />
+                                                    ))}
+                                                    <div className="flex items-center gap-2 ml-2">
+                                                        <Input
+                                                            type="color"
+                                                            value={formDataEmitter.color || record?.color || '#000000'}
+                                                            onChange={(e) => handleEmitterChange('color', e.target.value)}
+                                                            className="w-10 h-8 p-1 cursor-pointer"
+                                                        />
+                                                        <span className="text-xs text-slate-500 font-mono">
+                                                            {formDataEmitter.color || record?.color || 'Chưa chọn'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <input type="hidden" name="color" value={formDataEmitter.color || record?.color || ''} />
+                                                <InputError message={errors.color} className="mt-[5px]" />
                                             </div>
                                             {!isEdit && (
                                                 <div className="grid grid-cols-2 gap-4 mb-[20px]">
@@ -139,9 +174,8 @@ export default function UserSave({record, userCatalogues}: UserSaveProps) {
                                                             id="password"
                                                             type="password"
                                                             name="password"
-                                                            autoFocus
                                                             tabIndex={1}
-                                                            autoComplete=""
+                                                            autoComplete="new-password"
                                                             placeholder=""
                                                         />
                                                         <InputError message={errors.password} className="mt-[5px]" />
@@ -152,9 +186,8 @@ export default function UserSave({record, userCatalogues}: UserSaveProps) {
                                                             id="password_confirm"
                                                             type="password"
                                                             name="password_confirm"
-                                                            autoFocus
                                                             tabIndex={1}
-                                                            autoComplete=""
+                                                            autoComplete="new-password"
                                                             placeholder=""
                                                         />
                                                         <InputError message={errors.password_confirm} className="mt-[5px]" />
@@ -168,13 +201,12 @@ export default function UserSave({record, userCatalogues}: UserSaveProps) {
                                                         id="address"
                                                         type="text"
                                                         name="address"
-                                                        autoFocus
                                                         tabIndex={1}
-                                                        autoComplete=""
+                                                        autoComplete="off"
                                                         placeholder=""
                                                         defaultValue={record?.address ?? ''}
                                                     />
-                                                    {/* <InputError message={errors.address} className="mt-[5px]" /> */}
+                                                    <InputError message={errors.address} className="mt-[5px]" />
                                                 </div>
                                                 <div className="col-span-1">
                                                     <Label className="mb-[10px]">Ngày Sinh</Label>
@@ -184,7 +216,7 @@ export default function UserSave({record, userCatalogues}: UserSaveProps) {
                                                         defaultValue={record?.birthday}
                                                         onChange={handleEmitterChange}
                                                     />
-                                                    {/* <InputError message={errors.birthday} className="mt-[5px]" /> */}
+                                                    <InputError message={errors.birthday} className="mt-[5px]" />
                                                 </div>
                                             </div>
 
@@ -206,12 +238,12 @@ export default function UserSave({record, userCatalogues}: UserSaveProps) {
                                                 <Textarea 
                                                     name="description"
                                                     className="h-[168px]"
-                                                    autoFocus
                                                     tabIndex={1}
-                                                    autoComplete=""
+                                                    autoComplete="off"
                                                     placeholder=""
                                                     defaultValue={record?.description ?? ''}
                                                 />
+                                                <InputError message={errors.description} className="mt-[5px]" />
                                             </div>
                                             
                                             <div className="mt-[20px]">

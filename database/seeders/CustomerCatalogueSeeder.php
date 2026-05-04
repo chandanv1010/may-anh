@@ -27,6 +27,7 @@ class CustomerCatalogueSeeder extends Seeder
             [
                 'name' => 'Khách Hàng Thông Thường',
                 'description' => 'Nhóm khách hàng thông thường',
+                'discount_percent' => 0,
                 'order' => 1,
                 'publish' => 2,
                 'user_id' => $user->id,
@@ -34,6 +35,7 @@ class CustomerCatalogueSeeder extends Seeder
             [
                 'name' => 'Khách Hàng Quảng cáo',
                 'description' => 'Nhóm khách hàng quảng cáo',
+                'discount_percent' => 10,
                 'order' => 2,
                 'publish' => 2,
                 'user_id' => $user->id,

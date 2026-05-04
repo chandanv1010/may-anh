@@ -30,9 +30,11 @@ interface PricingSectionProps {
     price3d?: number
     deposit?: string
     costPrice?: number
+    onCostPriceChange?: (value: number | undefined) => void
     applyTax?: boolean
     forceTaxIncluded?: boolean
     pricingTiers?: PricingTier[]
+    isBackup?: boolean
     errors?: Record<string, string>
 }
 
@@ -53,9 +55,11 @@ export function PricingSection({
     price3d,
     deposit,
     costPrice,
+    onCostPriceChange,
     applyTax = false,
     forceTaxIncluded = false,
     pricingTiers = [],
+    isBackup = false,
     errors
 }: PricingSectionProps) {
     const { tooltips } = usePage<PageProps>().props
@@ -71,6 +75,7 @@ export function PricingSection({
     const [price3dValue, setPrice3dValue] = useState<number | undefined>(price3d ?? 0)
     const [depositValue, setDepositValue] = useState<string>(deposit ?? '')
     const [taxEnabled, setTaxEnabled] = useState(applyTax)
+    const [isBackupMachine, setIsBackupMachine] = useState(isBackup)
 
     // Sync from props when editing / demo loading
     useEffect(() => {
@@ -105,6 +110,10 @@ export function PricingSection({
     useEffect(() => {
         setDepositValue(deposit ?? '')
     }, [deposit])
+
+    useEffect(() => {
+        setIsBackupMachine(!!isBackup)
+    }, [isBackup])
 
     useEffect(() => {
         if (forceTaxIncluded) {
@@ -209,6 +218,54 @@ export function PricingSection({
                 </div>
             </div>
 
+            <div className="grid grid-cols-3 gap-4">
+                {/* Cost Price */}
+                <div className="col-span-1">
+                    <div className="flex items-center mb-2">
+                        <Label htmlFor="cost_price">Giá nhập máy (để tính hòa vốn)</Label>
+                    </div>
+                    <PriceInput
+                        id="cost_price"
+                        name="cost_price"
+                        value={costValue}
+                        onValueChange={(val) => {
+                            setCostValue(val);
+                            onCostPriceChange?.(val);
+                        }}
+                        placeholder="0"
+                    />
+                </div>
+
+                {/* Backup Machine Switch */}
+                <div className="col-span-1">
+                    <div className="flex items-center mb-2">
+                        <Label htmlFor="is_backup" className="text-amber-600 font-bold">Cài đặt máy</Label>
+                    </div>
+                    <div className="flex items-center gap-3 px-4 py-2 bg-amber-50/50 border border-amber-100 rounded-lg shadow-sm h-11">
+                        <div className="flex items-center gap-1.5 flex-1">
+                            <Label htmlFor="is_backup" className="text-xs font-bold text-amber-900 cursor-pointer">Máy dự phòng</Label>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Info className="w-3.5 h-3.5 text-amber-400 cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-[200px] text-[10px]">
+                                        <p>Đánh dấu nếu đây là máy dự phòng. Máy dự phòng sẽ có màu vàng trên Lịch Máy.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                        <Switch 
+                            id="is_backup" 
+                            name="is_backup" 
+                            checked={isBackupMachine}
+                            onCheckedChange={setIsBackupMachine}
+                            className="data-[state=checked]:bg-amber-500"
+                        />
+                    </div>
+                </div>
+            </div>
+
             {/* Deposit Section */}
             <div>
                 <Label htmlFor="deposit" className="mb-2 block">Thông tin cọc</Label>
@@ -222,13 +279,7 @@ export function PricingSection({
                 />
             </div>
 
-            {/* Hidden old fields */}
             <div className="hidden">
-                <PriceInput
-                    name="cost_price"
-                    value={costValue}
-                    onValueChange={setCostValue}
-                />
                 <PriceInput
                     name="retail_price"
                     value={retailValue}
@@ -261,6 +312,7 @@ export function PricingSection({
             <input type="hidden" name="price_3d" value={price3dValue || 0} />
             <input type="hidden" name="deposit" value={depositValue} />
             <input type="hidden" name="apply_tax" value={(forceTaxIncluded || taxEnabled) ? '1' : '0'} />
+            <input type="hidden" name="is_backup" value={isBackupMachine ? '1' : '0'} />
 
             {/* CRITICAL FIX: Always submit pricing_tiers to allow deletion when unchecked */}
             {!hasWholesale && (

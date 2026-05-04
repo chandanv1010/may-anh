@@ -31,6 +31,18 @@ class UserService extends BaseService implements UserServiceInterface {
         return $this;
     }
 
+    protected function withRelation(): static {
+        $relationable = $this->repository->getRelationable() ?? [];
+        if(count($relationable)){
+            foreach($relationable as $relation){
+                if($this->request->has($relation)){
+                    $this->model->{$relation}()->sync($this->request->{$relation});
+                }
+            }
+        }
+        return $this;
+    }
+
     public function getDropdown()
     {
         $request = new Request([

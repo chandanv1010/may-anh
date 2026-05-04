@@ -50,6 +50,7 @@ const pageConfig: PageConfig<User> = {
         { key: 'checkbox', label: '', className: 'w-[60px]' },
         { key: 'id', label: 'ID', className: 'w-[60px]' },
         { key: 'name', label: 'Tên thành viên', className: 'w-[15%]' },
+        { key: 'color', label: 'Màu', className: 'w-[80px] text-center' },
         { key: 'email', label: 'Email', className: 'w-[10%]' },
         { key: 'user_catalogues', label: 'Nhóm thành viên', className: 'w-[15%]' },
         { key: 'created_at', label: 'Ngày tạo', className: 'text-center' },
@@ -92,6 +93,13 @@ const TableRowComponent = React.memo(({
             </TableCell>
             <TableCell>{item.id}</TableCell>
             <TableCell>{item.name}</TableCell>
+            <TableCell className="text-center">
+                <div 
+                    className="w-6 h-6 rounded-full border border-slate-200 mx-auto" 
+                    style={{ backgroundColor: item.color as string || '#ccc' }}
+                    title={item.color as string}
+                />
+            </TableCell>
             <TableCell>{item.email}</TableCell>
             <TableCell>
                 {item.user_catalogues.map(catalogue => (

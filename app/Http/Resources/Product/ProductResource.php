@@ -113,6 +113,7 @@ class ProductResource extends JsonResource
                    'unit' => $this->unit,
                    'retail_price' => $this->retail_price !== null ? (float) $this->retail_price : 0,
                    'wholesale_price' => $this->wholesale_price !== null ? (float) $this->wholesale_price : 0,
+                   'cost_price' => $this->cost_price !== null ? (float) $this->cost_price : 0,
                    'price_6h' => $this->price_6h !== null ? (float) $this->price_6h : 0,
                    'price_1d' => $this->price_1d !== null ? (float) $this->price_1d : 0,
                    'price_3d' => $this->price_3d !== null ? (float) $this->price_3d : 0,
@@ -137,6 +138,7 @@ class ProductResource extends JsonResource
             'gallery_style' => $this->gallery_style ?? 'vertical',
             'image_aspect_ratio' => $this->image_aspect_ratio ?? '16:9',
             'image_object_fit' => $this->image_object_fit ?? 'contain',
+            'is_backup' => (bool) $this->is_backup,
             'created_at' => Carbon::parse($this->created_at)->format('d-m-Y'),
             'updated_at' => Carbon::parse($this->updated_at)->format('d-m-Y'),
             // Language fields - trả về trong current_language object (giống ProductCatalogueResource)
@@ -175,7 +177,7 @@ class ProductResource extends JsonResource
             'creator_name' => $this->whenLoaded('creators', fn() => $this->creators->name ?? null),
             // Product catalogues - Service đã load hết, chỉ trả về
             'product_catalogues' => $this->whenLoaded('product_catalogues', function(){
-                return $this->product_catalogues->map(function($catalogue){
+                return $this->product_catalogues->unique('id')->map(function($catalogue){
                     // Service đã load current_languages cho catalogue, chỉ lấy dữ liệu
                     $catalogueName = $catalogue->relationLoaded('current_languages') && $catalogue->current_languages->isNotEmpty()
                         ? $catalogue->current_languages->first()?->pivot->name

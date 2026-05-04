@@ -15,6 +15,13 @@ use App\Models\ProductCatalogueLanguage;
 class ProductCatalogue extends Model
 {
     use HasFactory, SoftDeletes, HasQuery, HasCanonical;
+    protected $appends = ['name'];
+
+    public function getNameAttribute(): string
+    {
+        $language = $this->current_languages->first() ?: $this->languages->first();
+        return $language->pivot->name ?? '';
+    }
 
     // Static cache for request lifecycle - reduces duplicate queries
     private static $withLanguagesCache = [];

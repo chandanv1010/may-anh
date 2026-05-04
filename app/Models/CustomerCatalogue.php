@@ -13,6 +13,7 @@ class CustomerCatalogue extends Model
 
     protected $fillable = [
         'name',
+        'discount_percent',
         'description',
         'order',
         'publish',

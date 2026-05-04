@@ -80,7 +80,7 @@ export default function PostSave({record, catalogues}: PostSaveProps) {
 
     const [images, setImages] = useState<string[]>(record?.album || [])
     const [postCatalogues, setPostCatalogues] = useState<string[]>([])
-    const [postCatalogueId, setPostCatalogueId] = useState<string>('')
+    const [postCatalogueId, setPostCatalogueId] = useState<string>(record?.post_catalogue_id?.toString() || '0')
     // const sessionId = useMemo(() => {
     //     return record?.id ? `post_catalogue-${record.id}` : `post_catalogue-${Date.now()}`
     // }, [record?.id])
@@ -127,14 +127,15 @@ export default function PostSave({record, catalogues}: PostSaveProps) {
                             method="post"
                             resetOnSuccess={['name', 'canonical', 'description', 'meta_title', 'meta_keyword', 'meta_description', 'description', 'content', 'images']}
                                 
-                            transform={(data) => ({ 
-                                ...data,
-                                ...(isEdit ? {_method: 'put'} : {}), 
-                                album: [...images],
-                                post_catalogues: postCatalogues,
-                                // moveAlbum: true,
-                                save_and_redirect: buttonAction.current
-                            })}
+                                transform={(data) => ({ 
+                                    ...data,
+                                    ...(isEdit ? {_method: 'put'} : {}), 
+                                    album: [...images],
+                                    post_catalogue_id: postCatalogueId,
+                                    post_catalogues: postCatalogues,
+                                    // moveAlbum: true,
+                                    save_and_redirect: buttonAction.current
+                                })}
                         >
                             {({ processing, errors }) => (
                                 <div className="max-w-[1280px] ml-auto mr-auto">
@@ -193,7 +194,7 @@ export default function PostSave({record, catalogues}: PostSaveProps) {
                                                 <CustomCatalogueParent 
                                                     name="post_catalogue_id"
                                                     data={availableCatalogues}
-                                                    value={(record?.post_catalogue_id || 0).toString()}
+                                                    value={postCatalogueId}
                                                     className='mb-[10px]'
                                                     onValueChange={setPostCatalogueId}
                                                 />

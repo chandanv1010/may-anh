@@ -77,27 +77,27 @@ class ProductSeeder extends Seeder
                 ]);
 
                 $pricingMap = [
-                    'FUJI XT100' => [150, 200, 450],
-                    'FUJI XT200' => [200, 250, 600],
-                    'FUJI XA3' => [100, 150, 350],
-                    'FUJI XA5' => [150, 200, 450],
-                    'FUJI XT30' => [250, 300, 700],
-                    'FUJI XM5' => [250, 300, 700],
-                    'FUJI XS10' => [300, 400, 900],
-                    'FUJI XS20' => [350, 450, 1050],
-                    'FUJI X100V' => [350, 450, 1050],
-                    'FUJI X100VI' => [450, 600, 1400],
-                    'CANON M10' => [100, 150, 350],
-                    'CANON G7X II' => [200, 250, 600],
-                    'CANON R50' => [300, 400, 900],
-                    'CANON M50' => [200, 250, 600],
-                    'SONY ZV1' => [200, 250, 600],
-                    'DJI POCKET 3' => [350, 450, 1050],
-                    'DJI MINI 4 PRO' => [400, 550, 1300],
+                    'CANON M10' => [80, 120, 100, '2M + CCCD'],
+                    'CANON G7X II' => [150, 200, 180, '2M + CCCD'],
+                    'CANON R50' => [150, 220, 200, '3M + CCCD'],
+                    'CANON M50' => [140, 180, 160, '3M + CCCD'],
+                    'SONY ZV1' => [100, 150, 130, '3M + CCCD'],
+                    'DJI POCKET 3' => [120, 160, 150, '3M + CCCD'],
+                    'DJI MINI 4 PRO' => [400, 600, 500, '20M + CCCD'],
+                    'FUJI XT100' => [120, 200, 180, '3M + CCCD'],
+                    'FUJI XT200' => [150, 220, 200, '3M + CCCD'],
+                    'FUJI XA3' => [90, 130, 120, '3M + CCCD'],
+                    'FUJI XA5' => [150, 200, 180, '3M + CCCD'],
+                    'FUJI XT30' => [180, 280, 220, '5M + CCCD'],
+                    'FUJI XM5' => [200, 300, 250, '5M + CCCD'],
+                    'FUJI XS10' => [220, 380, 320, '5M + CCCD'],
+                    'FUJI XS20' => [250, 400, 350, '7M + CCCD'],
+                    'FUJI X100V' => [250, 400, 350, '7M + CCCD'],
+                    'FUJI X100VI' => [300, 450, 400, '10M + CCCD'],
                 ];
 
                 foreach ($products as $prodName) {
-                    $prices = $pricingMap[$prodName] ?? [0, 0, 0];
+                    $config = $pricingMap[$prodName] ?? [0, 0, 0, ''];
                     
                     // Create Product
                     $product = Product::create([
@@ -106,10 +106,10 @@ class ProductSeeder extends Seeder
                         'user_id' => $userId,
                         'order' => 0,
                         'sku' => strtoupper(Str::random(8)),
-                        'price_6h' => $prices[0] * 1000,
-                        'price_1d' => $prices[1] * 1000,
-                        'price_3d' => $prices[2] * 1000,
-                        'deposit' => 'Cọc CCCD gắn chip hoặc tiền mặt 2.000.000 VNĐ'
+                        'price_6h' => $config[0] * 1000,
+                        'price_1d' => $config[1] * 1000,
+                        'price_3d' => $config[2] * 1000,
+                        'deposit' => $config[3]
                     ]);
 
                     $prodSlug = Str::slug($prodName);

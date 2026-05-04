@@ -2,6 +2,14 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { SkuInput } from "@/components/sku-input"
 import InputError from "@/components/input-error"
+import { Switch } from "@/components/ui/switch"
+import { Info } from "lucide-react"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface ProductBasicInfoProps {
     sku?: string
@@ -54,37 +62,39 @@ export function ProductBasicInfo({
                 </div>
             </div>
 
-            {/* Management Type - Radio buttons evenly spaced with smaller font */}
+            {/* Management Type & Backup Status */}
             <div className="border-t pt-4">
-                <div className="grid grid-cols-3 gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer p-3 border rounded hover:bg-gray-50">
-                        <input
-                            type="radio"
-                            name="management_type"
-                            value="basic"
-                            defaultChecked
-                            className="w-4 h-4 text-blue-600"
-                        />
-                        <span className="text-sm">Sản phẩm cơ bản</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer p-3 border rounded hover:bg-gray-50">
-                        <input
-                            type="radio"
-                            name="management_type"
-                            value="imei"
-                            className="w-4 h-4 text-blue-600"
-                        />
-                        <span className="text-sm">Quản lý theo IMEI/Series</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer p-3 border rounded hover:bg-gray-50">
-                        <input
-                            type="radio"
-                            name="management_type"
-                            value="batch"
-                            className="w-4 h-4 text-blue-600"
-                        />
-                        <span className="text-sm">Quản lý theo Lô - HSD</span>
-                    </label>
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 grid grid-cols-3 gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer p-2 border rounded hover:bg-gray-50 transition-colors">
+                            <input
+                                type="radio"
+                                name="management_type"
+                                value="basic"
+                                defaultChecked
+                                className="w-3.5 h-3.5 text-blue-600"
+                            />
+                            <span className="text-xs font-medium">Sản phẩm cơ bản</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer p-2 border rounded hover:bg-gray-50 transition-colors">
+                            <input
+                                type="radio"
+                                name="management_type"
+                                value="imei"
+                                className="w-3.5 h-3.5 text-blue-600"
+                            />
+                            <span className="text-xs font-medium">IMEI/Series</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer p-2 border rounded hover:bg-gray-50 transition-colors">
+                            <input
+                                type="radio"
+                                name="management_type"
+                                value="batch"
+                                className="w-3.5 h-3.5 text-blue-600"
+                            />
+                            <span className="text-xs font-medium">Lô - HSD</span>
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>

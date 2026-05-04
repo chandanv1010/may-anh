@@ -45,7 +45,8 @@ const pageConfig: PageConfig<CustomerCatalogue> = {
     columns: [
         { key: 'checkbox', label: '', className: 'w-[60px] text-center' },
         { key: 'id', label: 'ID', className: 'w-[40px] text-center' },
-        { key: 'name', label: 'Tên nhóm', className: 'w-[25%]' },
+        { key: 'name', label: 'Tên nhóm', className: 'w-[20%]' },
+        { key: 'discount_percent', label: 'Chiết khấu (%)', className: 'text-center w-[100px]' },
         { key: 'description', label: 'Mô tả', className: '' },
         { key: 'order', label: 'Thứ tự', className: 'text-center w-[80px]' },
         { key: 'creator', label: 'Người tạo', className: 'text-center' },
@@ -90,6 +91,7 @@ const TableRowComponent = React.memo(({
             </TableCell>
             <TableCell className="text-center">{item.id}</TableCell>
             <TableCell>{item.name}</TableCell>
+            <TableCell className="text-center font-bold text-red-500">{item.discount_percent}%</TableCell>
             <TableCell>{item.description}</TableCell>
             <TableCell className="text-center">
                 <div className="flex justify-center">

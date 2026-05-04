@@ -32,6 +32,7 @@ const pageConfig: PageConfig<CustomerCatalogue> = {
 export interface CustomerCatalogue extends IDateTime {
     id: number,
     name: string,
+    discount_percent: number,
     description: string,
     order: number,
     publish: string,
@@ -86,7 +87,7 @@ export default function CustomerCatalogueSave({ record }: CustomerCatalogueSaveP
                                     description="Nhập đầy đủ các thông tin trong các trường dưới đây"
                                     className="mb-[20px]"
                                 >
-                                    <div className="grid grid-cols-2 gap-4 mb-[20px]">
+                                    <div className="grid grid-cols-3 gap-4 mb-[20px]">
                                         <div className="col-span-1">
                                             <Label htmlFor="name" className="mb-[10px]">Tên nhóm khách hàng</Label>
                                             <Input
@@ -113,6 +114,19 @@ export default function CustomerCatalogueSave({ record }: CustomerCatalogueSaveP
                                                 defaultValue={record?.order || 0}
                                             />
                                             <InputError message={errors.order} className="mt-[5px]" />
+                                        </div>
+                                        <div className="col-span-1">
+                                            <Label htmlFor="discount_percent" className="mb-[10px]">Chiết khấu (%)</Label>
+                                            <Input
+                                                id="discount_percent"
+                                                type="number"
+                                                name="discount_percent"
+                                                tabIndex={3}
+                                                autoComplete=""
+                                                placeholder="0"
+                                                defaultValue={record?.discount_percent || 0}
+                                            />
+                                            <InputError message={errors.discount_percent} className="mt-[5px]" />
                                         </div>
                                     </div>
                                     <div>

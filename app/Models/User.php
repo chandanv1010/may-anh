@@ -17,6 +17,8 @@ class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable, HasQuery;
+    
+    protected $appends = ['permissions'];
 
     /**
      * The attributes that are mass assignable.
@@ -32,6 +34,7 @@ class User extends Authenticatable
         'description',
         'user_id',
         'publish',
+        'color',
     ];
 
     /**
@@ -83,4 +86,21 @@ class User extends Authenticatable
         );
     }
 
+    protected function permissions(): Attribute {
+        return Attribute::make(
+            get: function () {
+                $this->loadMissing('user_catalogues.permissions');
+                return $this->user_catalogues
+                    ->flatMap(fn ($catalogue) => $catalogue->permissions)
+                    ->pluck('canonical')
+                    ->unique()
+                    ->values();
+            }
+        );
+    }
+
+    public function isSuperAdmin()
+    {
+        return $this->user_catalogues->contains('id', 1);
+    }
 }

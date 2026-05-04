@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, User2, Settings, Notebook, Package, Container, Tag, Ticket, ArrowLeftRight, Book, Menu, ShoppingCart } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, User2, Settings, Notebook, Package, Container, Tag, Ticket, ArrowLeftRight, Book, Menu, ShoppingCart, Calendar, TrendingUp, Calculator } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -22,139 +22,84 @@ const mainNavItems: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
     },
-    /* {
-        title: 'Đơn Hàng',
-        href: '/backend/order',
-        icon: ShoppingCart,
-    }, */
     {
         title: 'Thành Viên',
         href: '#',
         icon: User2,
-        // isActive: true,
         items: [
             {
                 title: 'Nhóm Thành Viên',
-                url: '/backend/user_catalogue'
+                url: '/backend/user_catalogue',
+                permission: 'user_catalogue:index'
             },
             {
                 title: 'Thành Viên',
-                url: '/backend/user'
+                url: '/backend/user',
+                permission: 'user:index'
             },
             {
                 title: 'Quyền',
-                url: '/backend/permission'
+                url: '/backend/permission',
+                permission: 'permission:index'
             }
         ]
 
     },
-    /* {
-        title: 'Cấu Hình Chung',
-        href: '#',
-        icon: Settings,
-        // isActive: true,
-        items: [
-            {
-                title: 'Ngôn Ngữ',
-                url: '/backend/language'
-            },
-            {
-                title: 'Cài đặt',
-                url: '/backend/setting/general'
-            },
-            {
-                title: 'Log',
-                url: '/backend/log'
-            },
-            {
-                title: 'Router',
-                url: '/backend/router'
-            },
-            {
-                title: 'Menu',
-                url: '/backend/menu'
-            },
-            {
-                title: 'Banner & Slide',
-                url: '/backend/banner'
-            },
-            {
-                title: 'Quản lý Khối (Widget)',
-                url: '/backend/widget'
-            },
-            {
-                title: 'Đánh Giá',
-                url: '/backend/review'
-            }
-        ]
-
-    }, */
-    /* {
-        title: 'Bài Viết',
-        href: '#',
-        icon: Notebook,
-        // isActive: true,
-        items: [
-            {
-                title: 'Nhóm Bài Viết',
-                url: '/backend/post_catalogue'
-            },
-            {
-                title: 'Bài Viết',
-                url: '/backend/post'
-            }
-        ]
-
-    }, */
     {
         title: 'Sản Phẩm',
         href: '#',
         icon: Package,
-        // isActive: true,
         items: [
             {
                 title: 'Nhóm Sản Phẩm',
-                url: '/backend/product_catalogue'
+                url: '/backend/product_catalogue',
+                permission: 'product_catalogue:index'
             },
             {
                 title: 'Sản Phẩm',
-                url: '/backend/product'
+                url: '/backend/product',
+                permission: 'product:index'
             },
             {
                 title: 'Thương Hiệu',
-                url: '/backend/product_brand'
+                url: '/backend/product_brand',
+                permission: 'product_brand:index'
             },
-            /* {
-                title: 'Phiên Bản Sản Phẩm',
-                url: '/backend/product_variant'
-            }, */
 
         ]
-
     },
-    /* {
-        title: 'Kho',
+    {
+        title: 'Lịch Máy',
+        href: '/backend/booking/calendar',
+        icon: Calendar,
+    },
+    {
+        title: 'Doanh Thu',
+        href: '/backend/booking/statistics',
+        icon: TrendingUp,
+    },
+    {
+        title: 'Báo Giá',
+        href: '/backend/quotation',
+        icon: Calculator,
+    },
+    {
+        title: 'Bài Viết',
         href: '#',
-        icon: Container,
+        icon: Notebook,
         items: [
             {
-                title: 'Quản lý Kho',
-                url: '/backend/warehouse'
+                title: 'Nhóm Bài Viết',
+                url: '/backend/post_catalogue',
+                permission: 'post_catalogue:index'
             },
             {
-                title: 'Nhà cung cấp',
-                url: '/backend/supplier'
-            },
-            {
-                title: 'Nhập hàng',
-                url: '/backend/import-order'
-            },
-            {
-                title: 'Trả hàng NCC',
-                url: '/backend/return-import-order'
+                title: 'Bài Viết',
+                url: '/backend/post',
+                permission: 'post:index'
             }
         ]
-    }, */
+    },
     {
         title: 'Khách Hàng',
         href: '#',
@@ -162,33 +107,21 @@ const mainNavItems: NavItem[] = [
         items: [
             {
                 title: 'Nhóm Khách Hàng',
-                url: '/backend/customer_catalogue'
+                url: '/backend/customer_catalogue',
+                permission: 'customer_catalogue:index'
             },
             {
                 title: 'Khách Hàng',
-                url: '/backend/customer'
+                url: '/backend/customer',
+                permission: 'customer:index'
             }
         ]
     },
-    /* {
-        title: 'Marketing',
-        href: '#',
-        icon: Tag,
-        items: [
-            {
-                title: 'Khuyến Mãi',
-                url: '/backend/promotion/promotion'
-            },
-            {
-                title: 'Voucher',
-                url: '/backend/voucher/voucher'
-            }
-        ]
-    }, */
     {
         title: 'Sổ Quỹ',
         href: '/backend/cash-book/transaction',
         icon: Book,
+        permission: 'cash_book:index'
     },
 ];
 
@@ -205,7 +138,44 @@ const footerNavItems: NavItem[] = [
     },
 ];
 
+import { usePage } from '@inertiajs/react';
+
 export function AppSidebar() {
+    const { auth } = usePage().props as any;
+    const user = auth.user;
+
+    const filteredNavItems = mainNavItems.filter((item) => {
+        // Dashboard chỉ dành cho Super Admin
+        if (item.title === 'Dashboard') return user?.is_super_admin;
+
+        // Nếu là Super Admin thì cho xem tất cả các menu còn lại
+        if (user?.is_super_admin) return true;
+
+        // Kiểm tra quyền của mục chính
+        if (item.permission && !user?.permissions?.includes(item.permission)) {
+            return false;
+        }
+
+        // Kiểm tra quyền của các mục con (nếu có)
+        if (item.items) {
+            const visibleSubItems = item.items.filter((subItem) => {
+                if (subItem.permission && !user?.permissions?.includes(subItem.permission)) {
+                    return false;
+                }
+                return true;
+            });
+
+            // Nếu có mục con hợp lệ thì cập nhật lại danh sách mục con và hiển thị mục chính
+            if (visibleSubItems.length > 0) {
+                item.items = visibleSubItems;
+                return true;
+            }
+            return false;
+        }
+
+        return true;
+    });
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -221,7 +191,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={filteredNavItems} />
             </SidebarContent>
 
             <SidebarFooter>

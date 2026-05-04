@@ -98,6 +98,7 @@ export interface Product extends IDateTime {
     track_inventory?: boolean,
     allow_negative_stock?: boolean,
     low_stock_alert?: number,
+    cost_price?: number,
     pricing_tiers?: Array<{ min_quantity: number, max_quantity: number | null, price: number }>,
     tags?: string[],
     apply_tax?: boolean,
@@ -166,6 +167,7 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
     const [stockHistoryRefreshTrigger, setStockHistoryRefreshTrigger] = useState<number>(0)
     const [pricingRetail, setPricingRetail] = useState<number>(record?.retail_price ?? 0)
     const [pricingWholesale, setPricingWholesale] = useState<number>(record?.wholesale_price ?? 0)
+    const [pricingCost, setPricingCost] = useState<number>(record?.cost_price ?? 0)
     const [pricingTiers, setPricingTiers] = useState<Array<{ min_quantity: number; max_quantity: number | null; price: number }>>(record?.pricing_tiers || [])
     const [pricing6h, setPricing6h] = useState<number>(record?.price_6h ?? 0)
     const [pricing1d, setPricing1d] = useState<number>(record?.price_1d ?? 0)
@@ -287,6 +289,7 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
         setLowStockAlert(record.low_stock_alert ?? 0)
         setPricingRetail(record.retail_price ?? 0)
         setPricingWholesale(record.wholesale_price ?? 0)
+        setPricingCost(record.cost_price ?? 0)
         setPricing6h(record.price_6h ?? 0)
         setPricing1d(record.price_1d ?? 0)
         setPricing3d(record.price_3d ?? 0)
@@ -358,6 +361,7 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
         // Pricing
         setPricingRetail(199000)
         setPricingWholesale(149000)
+        setPricingCost(99000)
         setPricingTiers([
             { min_quantity: 2, max_quantity: 9, price: 139000 },
             { min_quantity: 10, max_quantity: null, price: 129000 },
@@ -597,27 +601,41 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                 isEdit ? product.update(record.id).url : product.store().url
                             }
                             method="post"
-                            resetOnSuccess={['name', 'canonical', 'description', 'meta_title', 'meta_keyword', 'meta_description', 'description', 'content', 'images']}
-
+                            resetOnSuccess={['name', 'canonical', 'description', 'meta_title', 'meta_keyword', 'meta_description', 'content', 'images']}
                             transform={(data) => {
+                                const slugify = (text: string) => {
+                                    return text
+                                        .toString()
+                                        .toLowerCase()
+                                        .normalize('NFD')
+                                        .replace(/[\u0300-\u036f]/g, '')
+                                        .replace(/[đĐ]/g, 'd')
+                                        .replace(/([^0-9a-z-\s])/g, '')
+                                        .replace(/(\s+)/g, '-')
+                                        .replace(/-+/g, '-')
+                                        .replace(/^-+|-+$/g, '');
+                                };
+
                                 const transformed = {
                                     ...data,
                                     ...(isEdit ? { _method: 'put' } : {}),
+                                    canonical: data.canonical || slugify(data.name || ''),
                                     album: [...images],
                                     management_type: managementTypeRef.current,
                                     track_inventory: trackInventoryRef.current ? 1 : 0,
                                     allow_negative_stock: allowNegativeStockRef.current ? 1 : 0,
                                     low_stock_alert: lowStockAlertRef.current ? Number(lowStockAlertRef.current) : 0,
                                     expired_warning_days: expiredWarningDaysRef.current ? Number(expiredWarningDaysRef.current) : 0,
+                                    cost_price: pricingCost,
                                     // Normalize optional foreign keys (avoid sending empty string -> validation fails)
                                     product_catalogue_id: productCatalogueId ? Number(productCatalogueId) : null,
                                     product_brand_id: productBrandId ? Number(productBrandId) : null,
-
                                     product_catalogues: (productCatalogues || []).filter(Boolean),
                                     attributes: attributesRef.current, // runtime is OK; cast for Inertia typing
                                     variants: variantsRef.current,
                                     warehouse_stocks: warehouseStocksRef.current,
                                     save_and_redirect: buttonAction.current,
+                                    is_backup: (data.is_backup === 1 || data.is_backup === '1' || data.is_backup === true) ? 1 : 0,
                                 }
                                 return transformed as unknown as Record<string, FormDataConvertible>
                             }}
@@ -664,6 +682,8 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                                 <PricingSection
                                                     retailPrice={pricingRetail}
                                                     wholesalePrice={pricingWholesale}
+                                                    costPrice={pricingCost}
+                                                    onCostPriceChange={setPricingCost}
                                                     price6h={pricing6h}
                                                     price1d={pricing1d}
                                                     price3d={pricing3d}
@@ -671,6 +691,7 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                                     pricingTiers={pricingTiers}
                                                     applyTax={record?.apply_tax}
                                                     forceTaxIncluded={taxPriceIncludes}
+                                                    isBackup={record?.is_backup}
                                                     errors={errors}
                                                 />
                                             </CustomCard>

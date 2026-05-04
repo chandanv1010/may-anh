@@ -41,5 +41,6 @@ export interface Product extends IDateTime {
     }[];
     category_name?: string;
     category_canonical?: string;
+    is_backup?: boolean;
     [key: string]: any;
 }

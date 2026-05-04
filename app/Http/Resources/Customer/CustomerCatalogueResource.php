@@ -18,6 +18,7 @@ class CustomerCatalogueResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'discount_percent' => $this->discount_percent,
             'description' => $this->description,
             'order' => $this->order,
             'publish' => $this->publish,

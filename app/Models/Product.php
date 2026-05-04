@@ -17,6 +17,7 @@ use App\Models\ProductBatch;
 class Product extends Model
 {
     use HasFactory, SoftDeletes, HasQuery;
+    protected $appends = ['name'];
 
     protected $fillable = [
         'product_catalogue_id',
@@ -54,6 +55,8 @@ class Product extends Model
         'robots',
         'auto_translate',
         'expired_warning_days',
+        'cost_price',
+        'is_backup',
         'deleted_at'
     ];
 
@@ -142,6 +145,10 @@ class Product extends Model
         return $this->morphMany(Review::class, 'reviewable');
     }
 
+    public function bookings(): HasMany{
+        return $this->hasMany(ProductBooking::class, 'product_id', 'id');
+    }
+
     protected $casts = [
         'created_at' => 'datetime:d-m-Y H:i',
         'updated_at' => 'datetime:d-m-Y H:i',
@@ -159,7 +166,9 @@ class Product extends Model
         'tax_included' => 'boolean',
         'sale_tax_rate' => 'decimal:2',
         'purchase_tax_rate' => 'decimal:2',
+        'cost_price' => 'decimal:2',
         'expired_warning_days' => 'integer',
+        'is_backup' => 'boolean',
     ];
 
     public function getNameAttribute(): string

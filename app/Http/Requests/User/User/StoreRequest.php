@@ -30,8 +30,9 @@ class StoreRequest extends FormRequest
             'password_confirm' => 'same:password',
             'user_catalogues' => 'required|array',
             'user_catalogues.*' => 'exists:user_catalogues,id',
-            'description' => 'sometimes|string',
-            'publish' => 'sometimes|required|in:1,2'
+            'description' => 'nullable|string',
+            'publish' => 'sometimes|required|in:1,2',
+            'color' => 'nullable|string|max:7',
         ];
     }
 

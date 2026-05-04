@@ -20,4 +20,6 @@ Route::prefix('backend')->middleware(['auth', 'verified', 'setBackendLocale'])->
     Route::patch('post/{id}/toggle/{field}', [PostController::class, 'toggle']);
     Route::resource('/post', PostController::class);
 
+    // Quotation (Báo Giá)
+    Route::get('/quotation', [App\Http\Controllers\Backend\V1\Post\QuotationController::class, 'index'])->name('quotation.index');
 });

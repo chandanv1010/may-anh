@@ -23,12 +23,14 @@ export interface NavItem {
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon | null;
     isActive?: boolean;
-    items?: NavSubItem[]
+    items?: NavSubItem[];
+    permission?: string;
 }
 
 export interface NavSubItem {
     title: string,
-    url: string
+    url: string,
+    permission?: string;
 }
 
 export interface SharedData {
@@ -92,6 +94,7 @@ export interface User extends IDateTime {
     address?: string | null,
     birthday?: string | null,
     user_catalogues: UserCatalogue[];
+    permissions: string[];
     [key: string]: unknown; // This allows for additional properties...
 }
 

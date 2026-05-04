@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Nguyễn Công Tuấn',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
+                'color' => '#3b82f6',
             ]
         );
 
