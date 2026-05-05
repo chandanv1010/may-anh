@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
-import { signin, signup } from '@/routes/index';
+import { login, register } from '@/routes/index';
 import { LoaderCircle } from 'lucide-react';
 
 import { SharedData } from '@/types';
@@ -24,7 +24,7 @@ export default function Register() {
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(signup.url(), {
+        post(register.url(), {
             onFinish: () => reset('password', 'password_confirmation'),
         });
     };
@@ -113,7 +113,7 @@ export default function Register() {
                         {t.has_account || 'Already have an account?'}
                     </p>
                     <Link 
-                        href={signin.url()} 
+                        href={login.url()} 
                         className="text-emerald-600 font-black hover:text-emerald-700 transition-colors inline-flex items-center gap-1 group"
                     >
                         {t.login_link || 'Log in here'}

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import InputError from '@/components/input-error';
-import { signin, signup } from '@/routes/index';
+import { login, register } from '@/routes/index';
 import { LoaderCircle } from 'lucide-react';
 
 export default function Login({ status, canResetPassword }: { status?: string; canResetPassword: boolean }) {
@@ -21,7 +21,7 @@ export default function Login({ status, canResetPassword }: { status?: string; c
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(signin.url(), {
+        post(login.url(), {
             onFinish: () => reset('password'),
         });
     };
@@ -60,7 +60,7 @@ export default function Login({ status, canResetPassword }: { status?: string; c
                         <Label htmlFor="password" className="text-gray-700 font-bold">{t.password || 'Password'}</Label>
                         {/* {canResetPassword && (
                             <Link
-                                href={signin.url()} 
+                                href={login.url()} 
                                 className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors"
                             >
                                 {t.forgot_password || 'Forgot password?'}
@@ -107,7 +107,7 @@ export default function Login({ status, canResetPassword }: { status?: string; c
                         {t.no_account || "Don't have an account?"}
                     </p>
                     <Link 
-                        href={signup.url()} 
+                        href={register.url()} 
                         className="text-emerald-600 font-black hover:text-emerald-700 transition-colors inline-flex items-center gap-1 group"
                     >
                         {t.register_link || 'Register now'}

@@ -83,7 +83,7 @@ export default function Toolbox() {
                             <div className="h-px bg-gray-50 my-1 mx-2" />
 
                             <Link 
-                                href="/signout" 
+                                href="/logout" 
                                 method="post" 
                                 as="button"
                                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-rose-600 hover:bg-rose-50 transition-colors text-left"
@@ -96,7 +96,7 @@ export default function Toolbox() {
                     )}
                 </div>
             ) : (
-                <Link href="/signin" className="flex items-center gap-2 group text-foreground hover:text-primary transition-colors">
+                <Link href="/login" className="flex items-center gap-2 group text-foreground hover:text-primary transition-colors">
                     <User className="h-5 w-5" />
                     <span className="text-sm font-medium hidden lg:inline-block">
                         {t.header?.login_register || 'Register/Sign In'}
