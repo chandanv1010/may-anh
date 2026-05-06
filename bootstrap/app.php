@@ -32,13 +32,9 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        $middleware->redirectUsersTo(fn (Request $request) => 
-            Auth::guard('customer')->check() ? '/' : '/dashboard'
-        );
+        $middleware->redirectUsersTo(fn (Request $request) => '/dashboard');
 
-        $middleware->redirectGuestsTo(fn (Request $request) => 
-            $request->is('customer/*') || $request->is('gio-hang.html') ? route('signin') : route('login')
-        );
+        $middleware->redirectGuestsTo(fn (Request $request) => route('login'));
     })
     ->withExceptions(function (Exceptions $exceptions) {
         

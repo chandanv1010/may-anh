@@ -157,6 +157,7 @@ class BookingController extends Controller
                 $customer = Customer::create([
                     'first_name' => $data['customer_name'],
                     'last_name' => '',
+                    'email' => uniqid() . '@guest.com',
                     'phone' => $data['customer_phone'],
                     'publish' => 2,
                     'user_id' => Auth::id() ?? 1,

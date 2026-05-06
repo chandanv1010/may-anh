@@ -158,10 +158,10 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
     const [selectedMachineId, setSelectedMachineId] = useState<number | null>(null);
     const [rentalPeriods, setRentalPeriods] = useState<{ startSlot: string, startDate: string, endSlot: string, endDate: string }[]>([]);
     const [pricingMode, setPricingMode] = useState<'auto' | 'edit'>('auto');
-    const [manualPrice, setManualPrice] = useState<number | undefined>(0);
+    const [manualPrice, setManualPrice] = useState<number | string>('');
     const [applyPromotion, setApplyPromotion] = useState(false);
     const [promotionMode, setPromotionMode] = useState<'money' | 'percent'>('money');
-    const [promotionAmount, setPromotionAmount] = useState<number | undefined>(0);
+    const [promotionAmount, setPromotionAmount] = useState<number | string>('');
     const [promotionReason, setPromotionReason] = useState('');
     const [depositInfo, setDepositInfo] = useState('');
     const [notes, setNotes] = useState('');
@@ -535,7 +535,7 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
                 setPromotionReason(order.discount_reason || '');
             } else {
                 setApplyPromotion(false);
-                setPromotionAmount(0);
+                setPromotionAmount('');
                 setPromotionReason('');
             }
 
@@ -568,9 +568,9 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
                 'giu': '' 
             });
             setPricingMode('auto');
-            setManualPrice(0);
+            setManualPrice('');
             setApplyPromotion(false);
-            setPromotionAmount(0);
+            setPromotionAmount('');
             setPromotionReason('');
             setOverlapError(null);
 
@@ -1051,8 +1051,8 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
                                                 </div>
                                             ) : (
                                                 <PriceInput 
-                                                    value={manualPrice} 
-                                                    onValueChange={(v) => setManualPrice(v)}
+                                                    value={manualPrice || ''} 
+                                                    onValueChange={(v) => setManualPrice(v || '')}
                                                     className="text-right text-xl font-black text-red-600 bg-white border-red-200 w-44 h-10 shadow-sm"
                                                     placeholder="Nhập giá..."
                                                     disabled={isLocked}
@@ -1108,8 +1108,8 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
                                                 {promotionMode === 'money' ? (
                                                     <PriceInput 
                                                         placeholder="Nhập số tiền..." 
-                                                        value={promotionAmount}
-                                                        onValueChange={setPromotionAmount}
+                                                        value={promotionAmount || ''}
+                                                        onValueChange={(val) => setPromotionAmount(val || '')}
                                                         className="bg-white border-slate-200 h-10 shadow-sm focus:border-blue-400" 
                                                     />
                                                 ) : (
@@ -1117,8 +1117,8 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
                                                         <Input 
                                                             type="number" 
                                                             placeholder="Nhập %..." 
-                                                            value={promotionAmount}
-                                                            onChange={(e) => setPromotionAmount(Number(e.target.value))}
+                                                            value={promotionAmount || ''}
+                                                            onChange={(e) => setPromotionAmount(e.target.value === '' ? '' : Number(e.target.value))}
                                                             className="bg-white border-slate-200 h-10 pr-8 shadow-sm focus:border-blue-400" 
                                                             disabled={isLocked}
                                                         />
@@ -1216,6 +1216,17 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
 const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, getUserColor, onCellDoubleClick, currentUser, isSuperAdmin }: any) => {
     const totalMinWidth = 200 + (days.length * slots.length * 32);
     
+    const [now, setNow] = useState(new Date());
+    useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 60000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const currentHour = now.getHours();
+    let currentShift = 'S';
+    if (currentHour >= 12 && currentHour < 18) currentShift = 'C';
+    else if (currentHour >= 18) currentShift = 'T';
+
     return (
         <table 
             className="w-full border-collapse table-fixed border-spacing-0"
@@ -1238,7 +1249,7 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                         Ngày<br/>Tên máy / Buổi
                     </th>
                     {days.map((day: any, idx: number) => (
-                        <th key={idx} colSpan={slots.length} className={`border-r border-b p-1 text-center h-16 ${isSameDay(day, new Date()) ? 'bg-blue-50' : ''}`}>
+                        <th key={idx} colSpan={slots.length} className={`border-r border-b p-1 text-center h-16 ${isSameDay(day, now) ? 'bg-blue-50' : ''}`}>
                             <div className="text-sm font-bold text-slate-700">{format(day, 'dd', { locale: vi })}</div>
                             <div className="text-[10px] uppercase text-slate-500">{format(day, 'EEEE', { locale: vi })}</div>
                         </th>
@@ -1248,15 +1259,21 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                     <th className="sticky left-0 z-30 bg-slate-50 border-r border-b shadow-[2px_0_5px_rgba(0,0,0,0.05)] h-8"></th>
                     {days.map((day: any, dIdx: number) => (
                         <React.Fragment key={dIdx}>
-                            {slots.map((slot: any, sIdx: number) => (
-                                <th 
-                                    key={`${dIdx}-${sIdx}`} 
-                                    style={{ width: '32px', minWidth: '32px' }}
-                                    className="border-r border-b text-[10px] font-bold text-slate-400 h-8"
-                                >
-                                    {slot}
-                                </th>
-                            ))}
+                            {slots.map((slot: any, sIdx: number) => {
+                                const isCurrentShift = isSameDay(day, now) && slot === currentShift;
+                                return (
+                                    <th 
+                                        key={`${dIdx}-${sIdx}`} 
+                                        style={{ width: '32px', minWidth: '32px' }}
+                                        className={cn(
+                                            "border-r border-b text-[10px] font-bold text-slate-400 h-8",
+                                            isCurrentShift && "border-r-[2px] border-r-blue-600 relative z-20"
+                                        )}
+                                    >
+                                        {slot}
+                                    </th>
+                                );
+                            })}
                         </React.Fragment>
                     ))}
                 </tr>
@@ -1270,7 +1287,8 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                         {days.map((day: any, dIdx: number) => (
                             <React.Fragment key={dIdx}>
                                 {slots.map((slot: any, sIdx: number) => {
-                                    const isPast = day < new Date() && !isSameDay(day, new Date());
+                                    const isCurrentShift = isSameDay(day, now) && slot === currentShift;
+                                    const isPast = day < startOfDay(now) || (isSameDay(day, now) && slots.indexOf(slot) < slots.indexOf(currentShift));
                                     const booking = findBooking(machine.id, day, slot);
                                     let cellColor = '#4ade80';
                                     let isClickable = true;
@@ -1281,7 +1299,7 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                             cellColor = '#ffffff';
                                             isClickable = true;
                                             tooltip = 'Bảo trì';
-                                        } else if (isPast) {
+                                        } else if (isPast || booking.status === 'finished') {
                                             cellColor = '#15803d';
                                             isClickable = false;
                                             tooltip = `Đã thuê xong - Bởi: ${users.find((u: any) => u.id === booking.user_id)?.name || 'N/A'}`;
@@ -1316,30 +1334,39 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                         </div>
                                     );
 
-                                    if (showPopover) {
-                                        return (
-                                            <td key={`${dIdx}-${sIdx}`} title={tooltip} className="border-r border-b p-0 cursor-pointer">
-                                                <Popover>
-                                                    <PopoverTrigger asChild>
-                                                        {innerBlock({ onDoubleClick: () => onCellDoubleClick(machine.id, day, slot) })}
-                                                    </PopoverTrigger>
-                                                    <PopoverContent className="w-72 p-0 shadow-2xl border border-amber-200 rounded-xl bg-[#fffbeb] overflow-hidden" side="top" align="center">
-                                                        <BookingInfoPopover booking={booking} machineName={machine.name} users={users} />
-                                                    </PopoverContent>
-                                                </Popover>
-                                            </td>
-                                        );
-                                    }
-
                                     return (
-                                        <td
-                                            key={`${dIdx}-${sIdx}`}
-                                            title={tooltip}
-                                            className={cn("border-r border-b p-0", (isClickable || booking) ? "cursor-pointer" : "cursor-not-allowed opacity-50")}
-                                            onDoubleClick={() => { if (hasPermission && (isClickable || booking)) onCellDoubleClick(machine.id, day, slot); }}
-                                        >
-                                            {innerBlock()}
-                                        </td>
+                                        <React.Fragment key={`${dIdx}-${sIdx}`}>
+                                            {showPopover ? (
+                                                <td 
+                                                    title={tooltip} 
+                                                    className={cn(
+                                                        "border-r border-b p-0 cursor-pointer",
+                                                        isCurrentShift && "border-r-[2px] border-r-blue-600 relative z-10"
+                                                    )}
+                                                >
+                                                    <Popover>
+                                                        <PopoverTrigger asChild>
+                                                            {innerBlock({ onDoubleClick: () => onCellDoubleClick(machine.id, day, slot) })}
+                                                        </PopoverTrigger>
+                                                        <PopoverContent className="w-72 p-0 shadow-2xl border border-amber-200 rounded-xl bg-[#fffbeb] overflow-hidden" side="top" align="center">
+                                                            <BookingInfoPopover booking={booking} machineName={machine.name} users={users} />
+                                                        </PopoverContent>
+                                                    </Popover>
+                                                </td>
+                                            ) : (
+                                                <td
+                                                    title={tooltip}
+                                                    className={cn(
+                                                        "border-r border-b p-0", 
+                                                        (isClickable || booking) ? "cursor-pointer" : "cursor-not-allowed opacity-50",
+                                                        isCurrentShift && "border-r-[2px] border-r-blue-600 relative z-10"
+                                                    )}
+                                                    onDoubleClick={() => { if (hasPermission && (isClickable || booking)) onCellDoubleClick(machine.id, day, slot); }}
+                                                >
+                                                    {innerBlock()}
+                                                </td>
+                                            )}
+                                        </React.Fragment>
                                     );
                                 })}
                             </React.Fragment>
