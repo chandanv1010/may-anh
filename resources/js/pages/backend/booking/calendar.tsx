@@ -253,7 +253,6 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
                         </div>
                     </div>
                         {calendarGrid}
-                    </div>
                 </Card>
             </div>
 
