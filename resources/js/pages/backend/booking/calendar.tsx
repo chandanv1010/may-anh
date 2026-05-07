@@ -6,7 +6,7 @@ import CustomPageHeading from '@/components/custom-page-heading';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Camera, Clock } from 'lucide-react';
-import { format, startOfWeek, eachDayOfInterval, isSameDay, startOfDay } from 'date-fns';
+import { format, addDays, startOfWeek, eachDayOfInterval, isSameDay, startOfDay } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { cn } from "@/lib/utils"
 import { BookingFormModal } from '@/components/booking/booking-form-modal';
@@ -119,7 +119,7 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
     const filteredMachines = useMemo(() => {
         if (selectedCatalogues.length === 0) return machines;
         return machines.filter(m => 
-            m.product_catalogues.some((cat: any) => selectedCatalogues.includes(cat.id))
+            m.product_catalogues?.some((cat: any) => selectedCatalogues.includes(cat.id))
         );
     }, [machines, selectedCatalogues]);
 
@@ -143,6 +143,30 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
             }
         }
     }, [bookings, isModalOpen, editingOrder]);
+
+    const slots = ['S', 'C', 'T'];
+    const days = useMemo(() => {
+        const start = startOfWeek(currentDate, { locale: vi });
+        return eachDayOfInterval({ start, end: addDays(start, 6) });
+    }, [currentDate]);
+
+    const prevPeriod = () => setCurrentDate(prev => addDays(prev, -7));
+    const nextPeriod = () => setCurrentDate(prev => addDays(prev, 7));
+    const today = () => setCurrentDate(new Date());
+
+    const findBooking = (machineId: number, date: Date, slot: string) => {
+        const dateStr = format(date, 'yyyy-MM-dd');
+        return bookings.find(b => b.product_id === machineId && b.booking_date === dateStr && b.slot === slot);
+    };
+
+    const getUserColor = (userId: number | null) => {
+        if (!userId) return '#3b82f6';
+        const colors = [
+            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1', 
+            '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4'
+        ];
+        return colors[userId % colors.length];
+    };
 
     const handleCellDoubleClick = (machineId: number, date: Date, slot: string) => {
         const existingBooking = findBooking(machineId, date, slot);

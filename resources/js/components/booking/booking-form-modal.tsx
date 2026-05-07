@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { router, usePage } from '@inertiajs/react';
-import { Product, User } from '@/types';
+import { Product, User, Customer } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon, User as UserIcon, Phone, Camera, Clock, BadgePercent, Wallet, NotebookPen, PlusCircle, AlertCircle } from 'lucide-react';
 import { format, addDays, startOfWeek, eachDayOfInterval, isSameDay, isBefore, startOfDay } from 'date-fns';
@@ -88,7 +88,7 @@ export function BookingFormModal({
     const [depositInfo, setDepositInfo] = useState('');
     const [notes, setNotes] = useState('');
     const [overlapError, setOverlapError] = useState<string | null>(null);
-    const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderStatus, setOrderStatus] = useState('pending');
     const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
@@ -102,7 +102,7 @@ export function BookingFormModal({
 
     const [source, setSource] = useState('FB');
     const [customerSearch, setCustomerSearch] = useState('');
-    const [customerSuggestions, setCustomerSuggestions] = useState<any[]>([]);
+    const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [customerData, setCustomerData] = useState({ name: '', phone: '' });
     const [selectedCatalogues, setSelectedCatalogues] = useState<number[]>([]);
@@ -194,7 +194,7 @@ export function BookingFormModal({
             phone: order.customer_phone, 
             discount_percent: Number(order.customer_discount_percent) || 0 
         };
-        setSelectedCustomer(cust);
+        setSelectedCustomer(cust as any as Customer);
 
         setSource(order.source || 'FB');
         setOrderStatus(order.status || 'pending');
@@ -339,11 +339,12 @@ export function BookingFormModal({
     }, [basePrice, selectedCustomer]);
 
     const finalPrice = useMemo(() => {
-        if (pricingMode === 'edit') return manualPrice || 0;
+        if (pricingMode === 'edit') return Number(manualPrice) || 0;
         let price = calculatedPrice;
         if (applyPromotion) {
-            if (promotionMode === 'money') price = Math.max(0, price - (promotionAmount || 0));
-            else price = Math.max(0, price - (basePrice * (promotionAmount || 0) / 100));
+            const promoVal = Number(promotionAmount) || 0;
+            if (promotionMode === 'money') price = Math.max(0, price - promoVal);
+            else price = Math.max(0, price - (basePrice * promoVal / 100));
         }
         return Math.round(price);
     }, [calculatedPrice, basePrice, applyPromotion, promotionMode, promotionAmount, pricingMode, manualPrice]);
@@ -434,7 +435,7 @@ export function BookingFormModal({
     const isLocked = editingOrderId !== null && orderStatus !== 'pending';
     const filteredMachines = useMemo(() => {
         if (selectedCatalogues.length === 0) return machines;
-        return machines.filter(m => m.product_catalogues.some((cat: any) => selectedCatalogues.includes(cat.id)));
+        return machines.filter(m => m.product_catalogues?.some((cat: any) => selectedCatalogues.includes(cat.id)));
     }, [machines, selectedCatalogues]);
 
     const handleCatalogueToggle = (id: number) => {
@@ -721,7 +722,7 @@ export function BookingFormModal({
                                                             <span>Tạm tính:</span>
                                                             <span className="font-medium">{new Intl.NumberFormat('vi-VN').format(Math.round(basePrice))}đ</span>
                                                         </div>
-                                                        {selectedCustomer?.discount_percent > 0 && (
+                                                        {selectedCustomer && selectedCustomer.discount_percent > 0 && (
                                                             <div className="flex justify-between text-[10px] text-green-600 font-bold">
                                                                 <span>CK khách ({selectedCustomer.discount_percent}%):</span>
                                                                 <span>-{new Intl.NumberFormat('vi-VN').format(Math.round(basePrice - calculatedPrice))}đ</span>

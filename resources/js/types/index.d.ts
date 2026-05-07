@@ -103,6 +103,18 @@ export interface IDateTime {
     updated_at: string
 }
 
+export interface Product extends IDateTime {
+    id: number;
+    name: string;
+    image: string;
+    price_6h?: number;
+    price_1d?: number;
+    price_3d?: number;
+    deposit?: string;
+    product_catalogues?: any[];
+    [key: string]: any;
+}
+
 
 type SwitchableFields = "publish" | "is_blocked" | "is_highlight" | "is_hot"
 export interface PageConfig<T>{
