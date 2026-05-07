@@ -32,6 +32,7 @@ class BookingOrder extends Model
         'staff_nhan_id',
         'staff_giu_id',
         'status',
+        'image',
     ];
 
     public function bookings()

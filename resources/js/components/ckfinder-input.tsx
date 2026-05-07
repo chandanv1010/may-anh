@@ -19,15 +19,16 @@ type WindowWithCKFinder = Window & {
 
 interface ICkfinderInputProps {
     name: string,
-    value?: string
+    value?: string,
+    onChange?: (value: string) => void
 }
 export default function CkfinderInput({
     name,
-    value
+    value,
+    onChange
 }: ICkfinderInputProps) {
 
     const [image, setImage] = useState<string>('')
-
 
     const openFinder = async () => {
         try {
@@ -46,6 +47,7 @@ export default function CkfinderInput({
                     // @ts-ignore - CKFinder is a third-party library, allow any type
             finder.selectActionFunction = function( fileUrl: string) {
                 setImage(fileUrl)
+                if(onChange) onChange(fileUrl)
             }
                     // @ts-ignore - CKFinder is a third-party library, allow any type
             finder.popup();

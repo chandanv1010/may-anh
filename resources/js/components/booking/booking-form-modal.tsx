@@ -16,6 +16,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
+import CkfinderInput from '@/components/ckfinder-input';
 
 interface BookingFormModalProps {
     isOpen: boolean;
@@ -87,6 +88,7 @@ export function BookingFormModal({
     const [promotionReason, setPromotionReason] = useState('');
     const [depositInfo, setDepositInfo] = useState('');
     const [notes, setNotes] = useState('');
+    const [image, setImage] = useState('');
     const [overlapError, setOverlapError] = useState<string | null>(null);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -139,6 +141,7 @@ export function BookingFormModal({
                 'nhan': '', 
                 'giu': '' 
             });
+            setImage('');
             setPricingMode('auto');
             setManualPrice('');
             setApplyPromotion(false);
@@ -178,6 +181,7 @@ export function BookingFormModal({
         setPromotionReason('');
         setOverlapError(null);
         setDepositInfo('');
+        setImage('');
     };
 
     const handleLoadOrder = (order: any, machineId: number) => {
@@ -200,6 +204,7 @@ export function BookingFormModal({
         setOrderStatus(order.status || 'pending');
         setNotes(order.notes || '');
         setDepositInfo(order.deposit_info || '');
+        setImage(order.image || '');
         setStaffRoles({
             'chot': order.staff_chot_id?.toString() || '',
             'giao_may': order.staff_giao_may_id?.toString() || '',
@@ -407,6 +412,7 @@ export function BookingFormModal({
             promotion_reason: promotionReason,
             deposit_info: depositInfo,
             notes,
+            image,
             staff_roles: staffRoles,
             total_amount: basePrice,
             discount_amount: basePrice - finalPrice,
@@ -834,6 +840,10 @@ export function BookingFormModal({
                             <div className="space-y-2">
                                 <Label className="text-sm font-semibold text-slate-700">Thông tin cọc:</Label>
                                 <Input placeholder="Mô tả thông tin cọc" value={depositInfo} onChange={(e) => setDepositInfo(e.target.value)} className="bg-white border-slate-200 h-11" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-sm font-semibold text-slate-700">Hình ảnh chứng từ / CCCD:</Label>
+                                <CkfinderInput name="image" value={image} onChange={setImage} />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-sm font-semibold text-slate-700">Ghi chú:</Label>
