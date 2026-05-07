@@ -103,7 +103,6 @@ export default function TransactionFilters({ filters, stores }: TransactionFilte
                     <SelectItem value="all">Tất cả</SelectItem>
                     <SelectItem value="receipt">Phiếu thu</SelectItem>
                     <SelectItem value="payment">Phiếu chi</SelectItem>
-                    <SelectItem value="transfer">Chuyển quỹ</SelectItem>
                 </SelectContent>
             </Select>
 

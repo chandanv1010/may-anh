@@ -115,6 +115,9 @@ use App\Services\Interfaces\Cart\CartServiceInterface;
 use App\Services\Impl\V1\Cart\CartService;
 use App\Services\Interfaces\Inventory\InventoryServiceInterface;
 use App\Services\Impl\V1\Inventory\InventoryService;
+use App\Services\Interfaces\Booking\BookingServiceInterface;
+use App\Services\Impl\V1\Booking\BookingService;
+use App\Repositories\Booking\BookingRepo;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -205,6 +208,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Inventory Module
         $this->app->bind(InventoryServiceInterface::class, InventoryService::class);
+
+        // Booking Module
+        $this->app->bind(BookingServiceInterface::class, BookingService::class);
+        $this->app->bind(BookingRepo::class);
     }
 
     /**

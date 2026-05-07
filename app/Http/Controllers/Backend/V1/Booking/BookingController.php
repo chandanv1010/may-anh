@@ -14,9 +14,47 @@ use Inertia\Response;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Services\Interfaces\Booking\BookingServiceInterface as BookingService;
 
 class BookingController extends Controller
 {
+    protected $service;
+
+    public function __construct(
+        BookingService $service
+    ) {
+        $this->service = $service;
+    }
+    /**
+     * Display a listing of the bookings.
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function index(Request $request): Response
+    {
+        $records = $this->service->paginate($request);
+        $users = User::all(['id', 'name', 'color']);
+        
+        $machines = Product::where('publish', 2)
+            ->with(['current_languages', 'languages', 'product_catalogues'])
+            ->orderBy('product_catalogue_id', 'asc')
+            ->orderBy('order', 'asc')
+            ->get();
+            
+        $catalogues = \App\Models\ProductCatalogue::where('publish', 2)
+            ->with(['current_languages'])
+            ->get();
+
+        return Inertia::render('backend/booking/index', [
+            'records' => $records,
+            'users' => $users,
+            'machines' => $machines,
+            'catalogues' => $catalogues,
+            'request' => $request->all(),
+        ]);
+    }
+
     /**
      * Display the booking calendar.
      *

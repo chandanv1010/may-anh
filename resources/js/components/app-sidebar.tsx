@@ -69,14 +69,23 @@ const mainNavItems: NavItem[] = [
         ]
     },
     {
-        title: 'Lịch Máy',
-        href: '/backend/booking/calendar',
+        title: 'Đặt Lịch',
+        href: '#',
         icon: Calendar,
-    },
-    {
-        title: 'Doanh Thu',
-        href: '/backend/booking/statistics',
-        icon: TrendingUp,
+        items: [
+            {
+                title: 'Lịch Máy',
+                url: '/backend/booking/calendar',
+            },
+            {
+                title: 'Danh Sách Đơn',
+                url: '/backend/booking/index',
+            },
+            {
+                title: 'Thống Kê Doanh Thu',
+                url: '/backend/booking/statistics',
+            }
+        ]
     },
     {
         title: 'Báo Giá',

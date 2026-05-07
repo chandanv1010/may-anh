@@ -195,7 +195,6 @@ export default function Index({ transactions, stores, stats }: ICashTransactionI
                 { label: 'Tất cả loại phiếu', value: '0' },
                 { label: 'Phiếu thu', value: 'receipt' },
                 { label: 'Phiếu chi', value: 'payment' },
-                { label: 'Chuyển quỹ', value: 'transfer' },
             ],
             type: 'single'
         });
@@ -277,12 +276,6 @@ export default function Index({ transactions, stores, stats }: ICashTransactionI
                                         <DropdownMenuItem className="cursor-pointer">
                                             <Banknote className="mr-2 h-4 w-4" />
                                             <span>Phiếu chi</span>
-                                        </DropdownMenuItem>
-                                    </Link>
-                                    <Link href="/backend/cash-book/transaction/create-transfer">
-                                        <DropdownMenuItem className="cursor-pointer">
-                                            <ArrowRightLeft className="mr-2 h-4 w-4" />
-                                            <span>Chuyển quỹ</span>
                                         </DropdownMenuItem>
                                     </Link>
                                 </DropdownMenuContent>
