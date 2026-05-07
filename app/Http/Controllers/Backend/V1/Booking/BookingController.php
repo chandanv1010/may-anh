@@ -73,7 +73,7 @@ class BookingController extends Controller
         $users = User::all(['id', 'name', 'color']);
 
         // Fetch bookings for a range (e.g., 30 days around today)
-        $bookings = ProductBooking::with('order')->whereBetween('booking_date', [
+        $bookings = ProductBooking::with(['order.bookings'])->whereBetween('booking_date', [
             Carbon::today()->subDays(30)->toDateString(),
             Carbon::today()->addDays(30)->toDateString()
         ])->get();
@@ -236,6 +236,7 @@ class BookingController extends Controller
                 'final_amount' => $data['final_amount'] ?? 0,
                 'deposit_info' => $data['deposit_info'],
                 'notes' => $data['notes'],
+                'image' => $data['image'] ?? null,
                 'discount_reason' => $data['promotion_reason'],
                 'promotion_type' => $data['promotion_type'] ?? $data['promotion_mode'] ?? 'money',
                 'promotion_value' => $data['promotion_value'] ?? $data['promotion_amount'] ?? 0,
@@ -289,6 +290,7 @@ class BookingController extends Controller
                 'final_amount' => $data['final_amount'] ?? 0,
                 'deposit_info' => $data['deposit_info'] ?? '',
                 'notes' => $data['notes'] ?? '',
+                'image' => $data['image'] ?? null,
                 'discount_reason' => $data['promotion_reason'] ?? '',
                 'promotion_type' => $data['promotion_type'] ?? $data['promotion_mode'] ?? 'money',
                 'promotion_value' => $data['promotion_value'] ?? $data['promotion_amount'] ?? 0,

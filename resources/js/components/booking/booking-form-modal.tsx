@@ -16,6 +16,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
+import { Maximize2, X } from 'lucide-react';
 import CkfinderInput from '@/components/ckfinder-input';
 
 interface BookingFormModalProps {
@@ -108,6 +109,7 @@ export function BookingFormModal({
     const [isSearching, setIsSearching] = useState(false);
     const [customerData, setCustomerData] = useState({ name: '', phone: '' });
     const [selectedCatalogues, setSelectedCatalogues] = useState<number[]>([]);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const slotsList = ['S', 'C', 'T'];
 
@@ -116,7 +118,8 @@ export function BookingFormModal({
         if (!isOpen) return;
 
         if (editingOrder) {
-            handleLoadOrder(editingOrder, editingOrder.bookings?.[0]?.product_id || 0);
+            const machineId = editingOrder._machine_id || editingOrder.bookings?.[0]?.product_id || 0;
+            handleLoadOrder(editingOrder, machineId);
         } else if (initialSlot) {
             // New booking from slot
             setEditingOrderId(null);
@@ -154,6 +157,8 @@ export function BookingFormModal({
         } else {
             // Default new booking
             resetForm();
+            setIsSubmitting(false);
+            setOverlapError(null);
         }
     }, [isOpen, editingOrder, initialSlot]);
 
@@ -182,6 +187,7 @@ export function BookingFormModal({
         setOverlapError(null);
         setDepositInfo('');
         setImage('');
+        setIsSubmitting(false);
     };
 
     const handleLoadOrder = (order: any, machineId: number) => {
@@ -246,6 +252,7 @@ export function BookingFormModal({
         setPricingMode('edit');
         setManualPrice(Number(order.final_amount));
         setOverlapError(null);
+        setIsSubmitting(false);
     };
 
     const handleCustomerSearch = async (query: string) => {
@@ -844,6 +851,25 @@ export function BookingFormModal({
                             <div className="space-y-2">
                                 <Label className="text-sm font-semibold text-slate-700">Hình ảnh chứng từ / CCCD:</Label>
                                 <CkfinderInput name="image" value={image} onChange={setImage} />
+                                {image && (
+                                    <div className="mt-2 relative w-24 h-24 group cursor-pointer" onClick={() => setIsPreviewOpen(true)}>
+                                        <img 
+                                            src={image} 
+                                            alt="Preview" 
+                                            className="w-full h-full object-cover rounded-md border border-slate-200 shadow-sm transition-all group-hover:opacity-80"
+                                        />
+                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-md">
+                                            <Maximize2 className="text-white h-5 w-5" />
+                                        </div>
+                                        <button 
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setImage(''); }}
+                                            className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 shadow-md hover:bg-rose-600 transition-colors"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-sm font-semibold text-slate-700">Ghi chú:</Label>
@@ -853,7 +879,7 @@ export function BookingFormModal({
                     </div>
 
                     <div className="flex gap-3 pt-4">
-                        <Button className="flex-1 bg-[#0088FF] h-12 text-base font-bold shadow-lg" disabled={isSubmitting || !!overlapError || !selectedMachineId || rentalPeriods.length === 0} onClick={handleSaveBooking}>
+                        <Button className="flex-1 bg-[#0088FF] h-12 text-base font-bold shadow-lg" disabled={isSubmitting || !!overlapError} onClick={handleSaveBooking}>
                             {isSubmitting ? 'Đang lưu...' : editingOrderId ? 'Cập nhật đơn hàng' : 'Tạo đơn hàng'}
                         </Button>
                         <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1 h-12 text-base font-bold border-slate-200">
@@ -862,6 +888,11 @@ export function BookingFormModal({
                     </div>
                 </div>
             </DialogContent>
+            <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+                <DialogContent className="max-w-4xl p-0 bg-transparent border-none shadow-none flex items-center justify-center">
+                    <img src={image} alt="Full Preview" className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" />
+                </DialogContent>
+            </Dialog>
             <style dangerouslySetInnerHTML={{ __html: `
                 .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }

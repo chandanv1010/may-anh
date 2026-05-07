@@ -173,7 +173,7 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
         const existingBooking = findBooking(machineId, date, slot);
 
         if (existingBooking && existingBooking.booking_order_id) {
-            setEditingOrder(existingBooking.order);
+            setEditingOrder({ ...existingBooking.order, _machine_id: machineId });
             setSelectedSlot(null);
             setIsModalOpen(true);
         } else {
