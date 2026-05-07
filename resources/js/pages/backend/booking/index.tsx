@@ -201,8 +201,7 @@ export default function BookingIndex({ records, users, machines, catalogues, req
             ],
             defaultValue: [],
             type: 'multiple',
-            operator: 'in',
-            field: 'status'
+            operator: 'in'
         },
         {
             key: 'staff_chot_id',
@@ -210,8 +209,7 @@ export default function BookingIndex({ records, users, machines, catalogues, req
             options: users.map(u => ({ label: u.name, value: u.id.toString() })),
             defaultValue: [],
             type: 'multiple',
-            operator: 'in',
-            field: 'staff_chot_id'
+            operator: 'in'
         }
     ], [users]);
 

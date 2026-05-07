@@ -57,10 +57,18 @@ const CustomFilter = ({
         // Ví dụ: post_catalogue_id[id][in]=59 -> { post_catalogue_id: { id: { in: "59" } } }
         const nestedData = request[key]
         if (nestedData && typeof nestedData === 'object') {
+            // Check format không có field: { key: { operator: "value" } }
+            const operators = ['in', 'between', 'equal', filter.operator].filter(Boolean)
+            for (const op of operators) {
+                const value = (nestedData as Record<string, unknown>)[op as string]
+                if (typeof value === 'string' && value) {
+                    return value.split(',').map(v => v.trim()).filter(v => v)
+                }
+            }
+
+            // Check format có field: { key: { field: { operator: "value" } } }
             const fieldData = (nestedData as Record<string, unknown>)[field]
             if (fieldData && typeof fieldData === 'object') {
-                // Lấy giá trị từ operator (in, between, equal, ...)
-                const operators = ['in', 'between', 'equal', filter.operator].filter(Boolean)
                 for (const op of operators) {
                     const value = (fieldData as Record<string, unknown>)[op as string]
                     if (typeof value === 'string' && value) {
@@ -80,6 +88,20 @@ const CustomFilter = ({
         if (matchingKeys.length > 0) {
             // Lấy giá trị từ key đầu tiên (thường chỉ có 1)
             const value = request[matchingKeys[0]]
+            if (typeof value === 'string' && value) {
+                return value.split(',').map(v => v.trim()).filter(v => v)
+            }
+        }
+
+        // Case 3: Kiểm tra format không có field (key[operator])
+        const fieldlessKeys = Object.keys(request).filter(reqKey => {
+            const pattern = new RegExp(`^${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\[.*\\]$`)
+            // Loại trừ case có nested object đã xử lý ở Case 1
+            return pattern.test(reqKey) && !reqKey.includes('][')
+        })
+
+        if (fieldlessKeys.length > 0) {
+            const value = request[fieldlessKeys[0]]
             if (typeof value === 'string' && value) {
                 return value.split(',').map(v => v.trim()).filter(v => v)
             }
@@ -198,7 +220,11 @@ const CustomFilter = ({
                                 else if (values.length === 2) operator = 'between'
                                 else operator = 'in'
                             }
-                            transformed[`${key}[${field}][${operator}]`] = values.join(',')
+                            if (field) {
+                                transformed[`${key}[${field}][${operator}]`] = values.join(',')
+                            } else {
+                                transformed[`${key}[${operator}]`] = values.join(',')
+                            }
                         } else {
                             transformed[key] = []
                         }
