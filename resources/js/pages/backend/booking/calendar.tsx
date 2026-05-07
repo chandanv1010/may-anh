@@ -148,11 +148,11 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
     const slots = ['S', 'C', 'T'];
     const days = useMemo(() => {
         const start = startOfWeek(currentDate, { locale: vi });
-        return eachDayOfInterval({ start, end: addDays(start, 6) });
+        return eachDayOfInterval({ start, end: addDays(start, 13) });
     }, [currentDate]);
 
-    const prevPeriod = () => setCurrentDate(prev => addDays(prev, -7));
-    const nextPeriod = () => setCurrentDate(prev => addDays(prev, 7));
+    const prevPeriod = () => setCurrentDate(prev => addDays(prev, -14));
+    const nextPeriod = () => setCurrentDate(prev => addDays(prev, 14));
     const today = () => setCurrentDate(new Date());
 
     const findBooking = (machineId: number, date: Date, slot: string) => {
@@ -308,13 +308,13 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
     return (
         <table 
             className="border-collapse table-fixed border-spacing-0"
-            style={{ width: `${totalMinWidth}px`, minWidth: `${totalMinWidth}px` }}
+            style={{ width: 'max-content' }}
         >
             <colgroup>
                 <col style={{ width: '200px' }} />
                 {days.flatMap((_: any, dIdx: number) => 
                     slots.map((_: any, sIdx: number) => (
-                        <col key={`${dIdx}-${sIdx}`} style={{ width: '32px' }} />
+                        <col key={`${dIdx}-${sIdx}`} style={{ width: '36px' }} />
                     ))
                 )}
             </colgroup>
@@ -342,7 +342,7 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                 return (
                                     <th 
                                         key={`${dIdx}-${sIdx}`} 
-                                        style={{ width: '32px', minWidth: '32px' }}
+                                        style={{ width: '36px', minWidth: '36px' }}
                                         className={cn(
                                             "border-r border-b text-[10px] font-bold text-slate-400 h-8",
                                             isCurrentShift && "border-r-[2px] border-r-blue-600 relative z-20"
