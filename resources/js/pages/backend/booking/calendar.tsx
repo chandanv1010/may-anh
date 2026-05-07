@@ -253,7 +253,9 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
                             </div>
                         </div>
                     </div>
+                    <div className="flex-1 overflow-auto custom-scrollbar bg-slate-50/30">
                         {calendarGrid}
+                    </div>
                 </Card>
             </div>
 
@@ -305,8 +307,8 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
 
     return (
         <table 
-            className="w-full border-collapse table-fixed border-spacing-0"
-            style={{ minWidth: `${totalMinWidth}px` }}
+            className="border-collapse table-fixed border-spacing-0"
+            style={{ width: `${totalMinWidth}px`, minWidth: `${totalMinWidth}px` }}
         >
             <colgroup>
                 <col style={{ width: '200px' }} />
