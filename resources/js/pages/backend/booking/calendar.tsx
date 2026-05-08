@@ -155,6 +155,20 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
     const nextPeriod = () => setCurrentDate(prev => addDays(prev, 14));
     const today = () => setCurrentDate(new Date());
 
+    // Scroll to today column when days change
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            const todayCol = document.getElementById('today-col');
+            const container = document.getElementById('calendar-scroll-container');
+            if (todayCol && container) {
+                const isMobile = window.innerWidth <= 768;
+                const offset = isMobile ? 120 : 200;
+                container.scrollTo({ left: Math.max(0, todayCol.offsetLeft - offset), behavior: 'smooth' });
+            }
+        }, 100);
+        return () => clearTimeout(timeoutId);
+    }, [days]);
+
     const findBooking = (machineId: number, date: Date, slot: string) => {
         const dateStr = format(date, 'yyyy-MM-dd');
         return bookings.find(b => b.product_id === machineId && b.booking_date === dateStr && b.slot === slot);
@@ -253,7 +267,7 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
                             </div>
                         </div>
                     </div>
-                    <div className="flex-1 overflow-auto custom-scrollbar bg-slate-50/30">
+                    <div id="calendar-scroll-container" className="flex-1 overflow-auto custom-scrollbar bg-slate-50/30">
                         {calendarGrid}
                     </div>
                 </Card>
@@ -343,7 +357,7 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                         Ngày<br/>Tên máy / Buổi
                     </th>
                     {days.map((day: any, idx: number) => (
-                        <th key={idx} colSpan={slots.length} className={`border-r border-b p-1 text-center h-16 ${isSameDay(day, now) ? 'bg-blue-50' : ''}`}>
+                        <th key={idx} id={isSameDay(day, now) ? 'today-col' : undefined} colSpan={slots.length} className={`border-r border-b p-1 text-center h-16 ${isSameDay(day, now) ? 'bg-blue-50' : ''}`}>
                             <div className="text-sm font-bold text-slate-700">{format(day, 'dd', { locale: vi })}</div>
                             <div className="text-[10px] uppercase text-slate-500">{format(day, 'EEEE', { locale: vi })}</div>
                         </th>
