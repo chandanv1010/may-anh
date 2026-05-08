@@ -39,9 +39,9 @@ export default function QuotationIndex({ posts }: Props) {
             <div className="flex h-full flex-1 flex-col gap-4 p-4 page-wrapper overflow-hidden bg-slate-50/50">
                 <CustomPageHeading heading="Bảng Báo Giá Chi Tiết" breadcrumbs={breadcrumbs} />
                 
-                <div className="flex-1 flex gap-6 overflow-hidden">
+                <div className="flex-1 flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-hidden">
                     {/* Left Sidebar / Switcher */}
-                    <Card className="w-80 flex flex-col bg-white shadow-xl border-none rounded-2xl overflow-hidden">
+                    <Card className="w-full lg:w-80 shrink-0 flex flex-col bg-white shadow-xl border-none rounded-2xl overflow-hidden max-h-[35vh] lg:max-h-none lg:h-full">
                         <div className="p-5 border-b bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
                             <h3 className="font-bold flex items-center gap-2">
                                 <Calculator className="h-5 w-5" />
@@ -94,7 +94,7 @@ export default function QuotationIndex({ posts }: Props) {
                     </Card>
 
                     {/* Content Area */}
-                    <Card className="flex-1 bg-white shadow-2xl border-none rounded-3xl overflow-hidden flex flex-col">
+                    <Card className="flex-1 bg-white shadow-2xl border-none rounded-2xl lg:rounded-3xl overflow-hidden flex flex-col min-h-[40vh]">
                         {selectedPost ? (
                             <>
                                 <div className="p-6 border-b bg-slate-50/50 flex items-center justify-between">
@@ -105,7 +105,7 @@ export default function QuotationIndex({ posts }: Props) {
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                                     <div 
-                                        className="prose prose-slate max-w-none quotation-content"
+                                        className="prose prose-slate max-w-none quotation-content overflow-x-auto"
                                         dangerouslySetInnerHTML={{ __html: selectedPost.current_languages[0]?.pivot.content }}
                                     />
                                 </div>
@@ -139,6 +139,7 @@ export default function QuotationIndex({ posts }: Props) {
                     border: 1px solid #e2e8f0;
                     background: white;
                     font-size: 14px;
+                    min-width: 600px;
                 }
                 .modern-quotation-table thead th {
                     background: #f8fafc;
