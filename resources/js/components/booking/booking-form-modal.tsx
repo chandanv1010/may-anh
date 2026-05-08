@@ -471,7 +471,10 @@ export function BookingFormModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden border-none shadow-2xl rounded-xl">
+            <DialogContent 
+                className="sm:max-w-[700px] p-0 overflow-hidden border-none shadow-2xl rounded-xl"
+                onInteractOutside={(e) => e.preventDefault()}
+            >
                 <DialogHeader className="bg-[#0088FF] text-white p-4 flex flex-row items-center justify-between space-y-0">
                     <DialogTitle className="text-lg font-bold flex items-center gap-2">
                         <PlusCircle className="h-5 w-5" />
