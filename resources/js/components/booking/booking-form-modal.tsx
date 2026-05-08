@@ -89,7 +89,22 @@ export function BookingFormModal({
     const [promotionReason, setPromotionReason] = useState('');
     const [depositInfo, setDepositInfo] = useState('');
     const [notes, setNotes] = useState('');
-    const [image, setImage] = useState('');
+    const [image, setImage] = useState<File | string | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!image) {
+            setPreviewUrl(null);
+            return;
+        }
+        if (typeof image === 'string') {
+            setPreviewUrl(image);
+        } else {
+            const objectUrl = URL.createObjectURL(image);
+            setPreviewUrl(objectUrl);
+            return () => URL.revokeObjectURL(objectUrl);
+        }
+    }, [image]);
     const [overlapError, setOverlapError] = useState<string | null>(null);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -144,7 +159,7 @@ export function BookingFormModal({
                 'nhan': '', 
                 'giu': '' 
             });
-            setImage('');
+            setImage(null);
             setPricingMode('auto');
             setManualPrice('');
             setApplyPromotion(false);
@@ -186,7 +201,7 @@ export function BookingFormModal({
         setPromotionReason('');
         setOverlapError(null);
         setDepositInfo('');
-        setImage('');
+        setImage(null);
         setIsSubmitting(false);
     };
 
@@ -210,7 +225,7 @@ export function BookingFormModal({
         setOrderStatus(order.status || 'pending');
         setNotes(order.notes || '');
         setDepositInfo(order.deposit_info || '');
-        setImage(order.image || '');
+        setImage(order.image || null);
         setStaffRoles({
             'chot': order.staff_chot_id?.toString() || '',
             'giao_may': order.staff_giao_may_id?.toString() || '',
@@ -472,10 +487,10 @@ export function BookingFormModal({
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent 
-                className="sm:max-w-[700px] p-0 overflow-hidden border-none shadow-2xl rounded-xl"
+                className="sm:max-w-[700px] p-0 overflow-hidden border-none shadow-2xl rounded-xl max-h-[90vh] flex flex-col"
                 onInteractOutside={(e) => e.preventDefault()}
             >
-                <DialogHeader className="bg-[#0088FF] text-white p-4 flex flex-row items-center justify-between space-y-0">
+                <DialogHeader className="bg-[#0088FF] text-white p-4 flex flex-row items-center justify-between space-y-0 shrink-0">
                     <DialogTitle className="text-lg font-bold flex items-center gap-2">
                         <PlusCircle className="h-5 w-5" />
                         {editingOrderId ? 'Cập nhật đơn hàng' : 'Thêm đơn hàng'}
@@ -483,7 +498,7 @@ export function BookingFormModal({
                     <DialogDescription className="hidden">Tạo hoặc cập nhật đơn hàng cho máy thuê</DialogDescription>
                 </DialogHeader>
                 
-                <div className="p-6 bg-[#f8fafc] space-y-5 custom-scrollbar max-h-[85vh] overflow-auto">
+                <div className="p-6 bg-[#f8fafc] space-y-5 custom-scrollbar overflow-auto">
                     <div className="space-y-3 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
                         <Label className="text-sm font-bold text-slate-700 flex items-center gap-2">
                             <Clock className="h-4 w-4 text-blue-500" />
@@ -858,11 +873,21 @@ export function BookingFormModal({
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-sm font-semibold text-slate-700">Hình ảnh chứng từ / CCCD:</Label>
-                                <CkfinderInput name="image" value={image} onChange={setImage} />
+                                <Input 
+                                    type="file" 
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        if (e.target.files && e.target.files[0]) {
+                                            setImage(e.target.files[0]);
+                                        }
+                                    }}
+                                    className="bg-white border-slate-200 cursor-pointer file:text-slate-700 file:font-semibold file:bg-slate-100 file:border-0 file:mr-4 file:py-2 file:px-4 hover:file:bg-slate-200"
+                                    disabled={isLocked}
+                                />
                                 {image && (
                                     <div className="mt-2 relative w-24 h-24 group cursor-pointer" onClick={() => setIsPreviewOpen(true)}>
                                         <img 
-                                            src={image} 
+                                            src={previewUrl || ''} 
                                             alt="Preview" 
                                             className="w-full h-full object-cover rounded-md border border-slate-200 shadow-sm transition-all group-hover:opacity-80"
                                         />
@@ -871,7 +896,7 @@ export function BookingFormModal({
                                         </div>
                                         <button 
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setImage(''); }}
+                                            onClick={(e) => { e.stopPropagation(); setImage(null); }}
                                             className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 shadow-md hover:bg-rose-600 transition-colors"
                                         >
                                             <X className="h-3 w-3" />
@@ -898,7 +923,7 @@ export function BookingFormModal({
             </DialogContent>
             <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
                 <DialogContent className="max-w-4xl p-0 bg-transparent border-none shadow-none flex items-center justify-center">
-                    <img src={image} alt="Full Preview" className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" />
+                    {previewUrl && <img src={previewUrl} alt="Full Preview" className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" />}
                 </DialogContent>
             </Dialog>
             <style dangerouslySetInnerHTML={{ __html: `

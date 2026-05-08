@@ -115,7 +115,6 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
     
     // Filtering State
     const [selectedCatalogues, setSelectedCatalogues] = useState<number[]>([]);
-    const [showMachineColMobile, setShowMachineColMobile] = useState(false);
 
     // Filtered machines for the dropdown
     const filteredMachines = useMemo(() => {
@@ -202,9 +201,8 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
             onCellDoubleClick={handleCellDoubleClick} 
             currentUser={currentUser}
             isSuperAdmin={isSuperAdmin}
-            showMachineColMobile={showMachineColMobile}
         />
-    ), [days, machines, users, bookings, currentDate, currentUser, isSuperAdmin, showMachineColMobile]);
+    ), [days, machines, users, bookings, currentDate, currentUser, isSuperAdmin]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -230,15 +228,6 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
                             </div>
                             <Button variant="outline" size="sm" onClick={today} className="bg-white">
                                 Hôm nay
-                            </Button>
-                            <Button 
-                                variant={showMachineColMobile ? "default" : "outline"} 
-                                size="sm" 
-                                onClick={() => setShowMachineColMobile(!showMachineColMobile)} 
-                                className="md:hidden"
-                            >
-                                <Camera className="w-4 h-4 mr-2"/>
-                                {showMachineColMobile ? "Ẩn tên máy" : "Hiện tên máy"}
                             </Button>
                         </div>
                         <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
@@ -297,12 +286,29 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
                     background: #94a3b8;
                 }
+                @media (max-width: 768px) {
+                    .mobile-zoom-table {
+                        zoom: 0.9;
+                    }
+                    .machine-col {
+                        width: 120px !important;
+                        min-width: 120px !important;
+                        font-size: 11px !important;
+                        padding: 4px 6px !important;
+                    }
+                }
+                @media (min-width: 769px) {
+                    .machine-col {
+                        width: 200px !important;
+                        min-width: 200px !important;
+                    }
+                }
             `}} />
         </AppLayout>
     );
 }
 
-const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, getUserColor, onCellDoubleClick, currentUser, isSuperAdmin, showMachineColMobile }: any) => {
+const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, getUserColor, onCellDoubleClick, currentUser, isSuperAdmin }: any) => {
     const totalMinWidth = 200 + (days.length * slots.length * 32);
     
     const [now, setNow] = useState(new Date());
@@ -318,11 +324,11 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
 
     return (
         <table 
-            className="border-collapse table-fixed border-spacing-0"
+            className="border-collapse table-fixed border-spacing-0 mobile-zoom-table"
             style={{ width: 'max-content' }}
         >
             <colgroup>
-                <col style={{ width: '200px' }} className={cn(!showMachineColMobile && "hidden md:table-column")} />
+                <col className="machine-col" />
                 {days.flatMap((_: any, dIdx: number) => 
                     slots.map((_: any, sIdx: number) => (
                         <col key={`${dIdx}-${sIdx}`} style={{ width: '36px' }} />
@@ -332,11 +338,7 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
             <thead className="sticky top-0 z-20 bg-slate-100 shadow-sm">
                 <tr>
                     <th 
-                        style={{ width: '200px', minWidth: '200px' }}
-                        className={cn(
-                            "sticky left-0 z-30 bg-slate-100 border-r border-b p-2 text-xs font-bold text-slate-600 h-16 shadow-[2px_0_5px_rgba(0,0,0,0.05)]",
-                            !showMachineColMobile && "hidden md:table-cell"
-                        )}
+                        className="sticky left-0 z-30 bg-slate-100 border-r border-b p-2 text-xs font-bold text-slate-600 h-16 shadow-[2px_0_5px_rgba(0,0,0,0.05)] machine-col"
                     >
                         Ngày<br/>Tên máy / Buổi
                     </th>
@@ -348,10 +350,7 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                     ))}
                 </tr>
                 <tr className="bg-slate-50">
-                    <th className={cn(
-                        "sticky left-0 z-30 bg-slate-50 border-r border-b shadow-[2px_0_5px_rgba(0,0,0,0.05)] h-8",
-                        !showMachineColMobile && "hidden md:table-cell"
-                    )}></th>
+                    <th className="sticky left-0 z-30 bg-slate-50 border-r border-b shadow-[2px_0_5px_rgba(0,0,0,0.05)] h-8 machine-col"></th>
                     {days.map((day: any, dIdx: number) => (
                         <React.Fragment key={dIdx}>
                             {slots.map((slot: any, sIdx: number) => {
@@ -376,10 +375,7 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
             <tbody>
                 {machines.length > 0 ? machines.map((machine: any, mIdx: number) => (
                     <tr key={mIdx} className="hover:bg-slate-50 transition-colors">
-                        <td className={cn(
-                            "sticky left-0 z-10 bg-white border-r border-b p-2 text-xs font-medium text-slate-700 shadow-[2px_0_5px_rgba(0,0,0,0.03)] truncate",
-                            !showMachineColMobile && "hidden md:table-cell"
-                        )}>
+                        <td className="sticky left-0 z-10 bg-white border-r border-b p-2 text-xs font-medium text-slate-700 shadow-[2px_0_5px_rgba(0,0,0,0.03)] truncate machine-col">
                             {machine.name || 'Sản phẩm ' + (mIdx + 1)}
                         </td>
                         {days.map((day: any, dIdx: number) => (

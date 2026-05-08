@@ -178,6 +178,15 @@ class BookingController extends Controller
 
         $data = $request->all();
 
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('uploads/bookings', 'public');
+            $data['image'] = '/storage/' . $path;
+        } elseif (!$request->has('image') || $request->input('image') === 'null') {
+            $data['image'] = null;
+        } else {
+            $data['image'] = $request->input('image');
+        }
+
         return DB::transaction(function () use ($data) {
             // 1. Identify or Create Customer
             $customer = null;
@@ -277,6 +286,15 @@ class BookingController extends Controller
 
         // Merge rest of data
         $data = array_merge($request->all(), $data);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('uploads/bookings', 'public');
+            $data['image'] = '/storage/' . $path;
+        } elseif (!$request->has('image') || $request->input('image') === 'null') {
+            $data['image'] = null;
+        } else {
+            $data['image'] = $request->input('image');
+        }
 
         return DB::transaction(function () use ($order, $data) {
             $oldStatus = $order->status;
