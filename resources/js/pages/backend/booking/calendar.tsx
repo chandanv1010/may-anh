@@ -375,7 +375,7 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                         style={{ width: '36px', minWidth: '36px' }}
                                         className={cn(
                                             "border-r border-b text-[10px] font-bold text-slate-400 h-8",
-                                            isCurrentShift && "border-r-[2px] border-r-blue-600 relative z-20"
+                                            isCurrentShift && "border-l-[2px] border-l-blue-600 relative z-20"
                                         )}
                                     >
                                         {slot}
@@ -449,7 +449,7 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                                     title={tooltip} 
                                                     className={cn(
                                                         "border-r border-b p-0 cursor-pointer",
-                                                        isCurrentShift && "border-r-[2px] border-r-blue-600 relative z-10"
+                                                        isCurrentShift && "border-l-[2px] border-l-blue-600 relative z-10"
                                                     )}
                                                 >
                                                     <Popover>
@@ -467,7 +467,7 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                                     className={cn(
                                                         "border-r border-b p-0", 
                                                         (isClickable || booking) ? "cursor-pointer" : "cursor-not-allowed opacity-50",
-                                                        isCurrentShift && "border-r-[2px] border-r-blue-600 relative z-10"
+                                                        isCurrentShift && "border-l-[2px] border-l-blue-600 relative z-10"
                                                     )}
                                                     onDoubleClick={() => { if (hasPermission && (isClickable || booking)) onCellDoubleClick(machine.id, day, slot); }}
                                                 >
