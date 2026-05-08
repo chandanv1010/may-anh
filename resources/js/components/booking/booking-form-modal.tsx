@@ -570,7 +570,7 @@ export function BookingFormModal({
                     <div className="grid grid-cols-12 gap-4">
                         {orderStatus !== 'maintenance' && (
                             <>
-                                <div className="col-span-4 space-y-2 relative">
+                                <div className="col-span-12 md:col-span-4 space-y-2 relative">
                                     <Label className="text-sm font-semibold text-slate-700">Tên khách hàng (*):</Label>
                                     <div className="relative">
                                         <Input 
@@ -593,7 +593,7 @@ export function BookingFormModal({
                                         )}
                                     </div>
                                 </div>
-                                <div className="col-span-4 space-y-2">
+                                <div className="col-span-12 md:col-span-4 space-y-2">
                                     <Label className="text-sm font-semibold text-slate-700">Số điện thoại (*):</Label>
                                     <div className="relative">
                                         <Input 
@@ -606,7 +606,7 @@ export function BookingFormModal({
                                         <Phone className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                                     </div>
                                 </div>
-                                <div className="col-span-4 space-y-2">
+                                <div className="col-span-12 md:col-span-4 space-y-2">
                                     <Label className="text-sm font-semibold text-slate-700">Nguồn:</Label>
                                     <Select value={source} onValueChange={setSource} disabled={isLocked}>
                                         <SelectTrigger className="w-full bg-white border-slate-200 h-11 px-3">
@@ -652,18 +652,23 @@ export function BookingFormModal({
                             </Label>
                             <div className="space-y-2">
                                 {rentalPeriods.map((period, idx) => (
-                                    <div key={idx} className="flex items-center gap-2">
-                                        <Select value={period.startSlot} onValueChange={(v) => updatePeriod(idx, 'startSlot', v)} disabled={isLocked}>
-                                            <SelectTrigger className="w-24 bg-white border-slate-200 h-11 min-h-[44px]"><SelectValue /></SelectTrigger>
-                                            <SelectContent>{slotsList.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <DatePicker value={period.startDate} minDate={todayString} onChange={(val) => updatePeriod(idx, 'startDate', val)} disabled={isLocked} />
-                                        <span className="text-slate-400 font-bold">-&gt;</span>
-                                        <Select value={period.endSlot} onValueChange={(v) => updatePeriod(idx, 'endSlot', v)} disabled={isLocked}>
-                                            <SelectTrigger className="w-24 bg-white border-slate-200 h-11 min-h-[44px]"><SelectValue /></SelectTrigger>
-                                            <SelectContent>{slotsList.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <DatePicker value={period.endDate} minDate={period.startDate} onChange={(val) => updatePeriod(idx, 'endDate', val)} disabled={isLocked} />
+                                    <div key={idx} className="flex flex-col md:flex-row md:items-center gap-2 border border-slate-100 md:border-none p-3 md:p-0 rounded-lg md:rounded-none bg-slate-50 md:bg-transparent">
+                                        <div className="flex items-center gap-2">
+                                            <Select value={period.startSlot} onValueChange={(v) => updatePeriod(idx, 'startSlot', v)} disabled={isLocked}>
+                                                <SelectTrigger className="w-24 bg-white border-slate-200 h-11 min-h-[44px]"><SelectValue /></SelectTrigger>
+                                                <SelectContent>{slotsList.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <DatePicker value={period.startDate} minDate={todayString} onChange={(val) => updatePeriod(idx, 'startDate', val)} disabled={isLocked} />
+                                        </div>
+                                        <span className="hidden md:inline text-slate-400 font-bold">-&gt;</span>
+                                        <span className="md:hidden text-center text-slate-400 font-bold text-xs py-1">⬇️ đến</span>
+                                        <div className="flex items-center gap-2">
+                                            <Select value={period.endSlot} onValueChange={(v) => updatePeriod(idx, 'endSlot', v)} disabled={isLocked}>
+                                                <SelectTrigger className="w-24 bg-white border-slate-200 h-11 min-h-[44px]"><SelectValue /></SelectTrigger>
+                                                <SelectContent>{slotsList.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <DatePicker value={period.endDate} minDate={period.startDate} onChange={(val) => updatePeriod(idx, 'endDate', val)} disabled={isLocked} />
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -677,7 +682,7 @@ export function BookingFormModal({
                                 <span className="inline-flex items-center gap-1 mx-1">✔️ <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Nhận</span></span>
                                 <span className="inline-flex items-center gap-1 mx-1">✋ <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Giữ</span>)</span>
                             </Label>
-                            <div className="grid grid-cols-5 gap-2">
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                                 {[
                                     { role: 'chot', icon: '💰' },
                                     { role: 'giao_may', icon: '📦' },
