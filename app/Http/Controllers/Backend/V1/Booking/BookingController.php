@@ -38,7 +38,7 @@ class BookingController extends Controller
         
         $machines = Product::where('publish', 2)
             ->with(['current_languages', 'languages', 'product_catalogues'])
-            ->orderBy('order', 'desc')
+            ->orderBy('order', 'asc')
             ->get();
             
         $catalogues = \App\Models\ProductCatalogue::where('publish', 2)
@@ -64,7 +64,7 @@ class BookingController extends Controller
         // Fetch all products (machines) to show in the calendar
         $machines = Product::where('publish', 2)
             ->with(['current_languages', 'languages', 'product_catalogues'])
-            ->orderBy('order', 'desc')
+            ->orderBy('order', 'asc')
             ->get();
 
         // Fetch all users to know their colors
@@ -116,7 +116,7 @@ class BookingController extends Controller
             'orders' => $orders,
             'users' => User::all(),
             'machines' => Product::where('publish', 2)
-                ->orderBy('order', 'desc')
+                ->orderBy('order', 'asc')
                 ->get(),
             'isSuperAdmin' => $isSuperAdmin,
         ]);

@@ -366,19 +366,19 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
             <thead className="sticky top-0 z-20 bg-slate-100 shadow-sm">
                 <tr>
                     <th 
-                        className="sticky left-0 z-30 bg-slate-100 border-r border-b p-2 text-xs font-bold text-slate-600 h-12 shadow-[2px_0_5px_rgba(0,0,0,0.05)] machine-col"
+                        className="sticky top-0 left-0 z-30 bg-slate-100 border-r border-b p-2 text-xs font-bold text-slate-600 h-12 shadow-[2px_0_5px_rgba(0,0,0,0.05)] machine-col"
                     >
                         Ngày<br/>Tên máy / Buổi
                     </th>
                     {days.map((day: any, idx: number) => (
-                        <th key={idx} id={isSameDay(day, now) ? 'today-col' : undefined} colSpan={slots.length} className={`border-r border-b p-1 text-center h-12 ${isSameDay(day, now) ? 'bg-blue-50' : ''}`}>
+                        <th key={idx} id={isSameDay(day, now) ? 'today-col' : undefined} colSpan={slots.length} className={`sticky top-0 z-20 border-r border-b p-1 text-center h-12 ${isSameDay(day, now) ? 'bg-blue-50' : 'bg-slate-100'}`}>
                             <div className="text-sm font-bold text-slate-700">{format(day, 'dd', { locale: vi })}</div>
                             <div className="text-[10px] uppercase text-slate-500">{format(day, 'EEEE', { locale: vi })}</div>
                         </th>
                     ))}
                 </tr>
                 <tr className="bg-slate-50">
-                    <th className="sticky left-0 z-30 bg-slate-50 border-r border-b shadow-[2px_0_5px_rgba(0,0,0,0.05)] h-6 machine-col"></th>
+                    <th className="sticky top-12 left-0 z-30 bg-slate-50 border-r border-b shadow-[2px_0_5px_rgba(0,0,0,0.05)] h-6 machine-col"></th>
                     {days.map((day: any, dIdx: number) => (
                         <React.Fragment key={dIdx}>
                             {slots.map((slot: any, sIdx: number) => {
@@ -388,7 +388,7 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                         key={`${dIdx}-${sIdx}`} 
                                         style={{ width: '38px', minWidth: '38px' }}
                                         className={cn(
-                                            "border-r border-b text-[10px] font-bold text-slate-400 h-6",
+                                            "sticky top-12 z-20 bg-slate-50 border-r border-b text-[10px] font-bold text-slate-400 h-6",
                                             isCurrentShift && "border-l-[2px] border-l-blue-600 relative z-20"
                                         )}
                                     >
