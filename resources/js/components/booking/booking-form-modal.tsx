@@ -324,6 +324,7 @@ export function BookingFormModal({
         const p6h = Number(selectedMachine.price_6h) || 0;
         const p1d = Number(selectedMachine.price_1d) || 0;
         const p3d = Number(selectedMachine.price_3d) || 0;
+        const p7d = Number(selectedMachine.price_7d) || 0;
         if (totalSessions === 0) return 0;
         
         const allSlots = new Set<number>();
@@ -351,7 +352,7 @@ export function BookingFormModal({
             else if (sessions === 2) total += p1d;
             else {
                 const days = sessions / 3;
-                const rate = sessions >= 9 ? p3d : p1d;
+                const rate = sessions >= 21 ? (p7d || p3d || p1d) : (sessions >= 9 ? (p3d || p1d) : p1d);
                 total += days * rate;
             }
         });

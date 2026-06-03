@@ -26,6 +26,13 @@ class UpdateRequest extends FormRequest
     {
         $catalogueId = $this->route('product_catalogue');
         
+        if (!$this->has('name')) {
+            return [
+                'order' => 'sometimes|integer|min:0',
+                'publish' => 'sometimes',
+            ];
+        }
+        
         // Get router for this catalogue
         $router = \App\Models\Router::where('routerable_type', 'App\Models\ProductCatalogue')
             ->where('routerable_id', $catalogueId)

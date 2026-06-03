@@ -15,6 +15,13 @@ class UpdateRequest extends FormRequest
     {
         $productId = $this->route('product');
         
+        if (!$this->has('name')) {
+            return [
+                'order' => 'sometimes|integer|min:0',
+                'publish' => 'sometimes',
+            ];
+        }
+        
         // Get router for this product
         $router = \App\Models\Router::where('routerable_type', 'App\Models\Product')
             ->where('routerable_id', $productId)
@@ -50,6 +57,10 @@ class UpdateRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        if (!$this->has('name')) {
+            return;
+        }
+        
         // Helper to clean price inputs
         $cleanPrice = fn($val) => $val === '' ? 0 : (is_string($val) ? str_replace(['.', ','], '', $val) : $val);
 

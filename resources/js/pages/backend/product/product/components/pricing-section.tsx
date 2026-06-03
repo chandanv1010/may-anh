@@ -28,6 +28,7 @@ interface PricingSectionProps {
     price6h?: number
     price1d?: number
     price3d?: number
+    price7d?: number
     deposit?: string
     costPrice?: number
     onCostPriceChange?: (value: number | undefined) => void
@@ -53,6 +54,7 @@ export function PricingSection({
     price6h,
     price1d,
     price3d,
+    price7d,
     deposit,
     costPrice,
     onCostPriceChange,
@@ -73,6 +75,7 @@ export function PricingSection({
     const [price6hValue, setPrice6hValue] = useState<number | undefined>(price6h ?? 0)
     const [price1dValue, setPrice1dValue] = useState<number | undefined>(price1d ?? 0)
     const [price3dValue, setPrice3dValue] = useState<number | undefined>(price3d ?? 0)
+    const [price7dValue, setPrice7dValue] = useState<number | undefined>(price7d ?? 0)
     const [depositValue, setDepositValue] = useState<string>(deposit ?? '')
     const [taxEnabled, setTaxEnabled] = useState(applyTax)
     const [isBackupMachine, setIsBackupMachine] = useState(isBackup)
@@ -106,6 +109,10 @@ export function PricingSection({
     useEffect(() => {
         setPrice3dValue(price3d ?? 0)
     }, [price3d])
+
+    useEffect(() => {
+        setPrice7dValue(price7d ?? 0)
+    }, [price7d])
 
     useEffect(() => {
         setDepositValue(deposit ?? '')
@@ -174,7 +181,7 @@ export function PricingSection({
 
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
                 {/* Price 6h */}
                 <div className="col-span-1">
                     <div className="flex items-center mb-2">
@@ -213,6 +220,20 @@ export function PricingSection({
                         name="price_3d"
                         value={price3dValue}
                         onValueChange={setPrice3dValue}
+                        placeholder="0"
+                    />
+                </div>
+
+                {/* Price 7d */}
+                <div className="col-span-1">
+                    <div className="flex items-center mb-2">
+                        <Label htmlFor="price_7d">Giá thuê 7 ngày</Label>
+                    </div>
+                    <PriceInput
+                        id="price_7d"
+                        name="price_7d"
+                        value={price7dValue}
+                        onValueChange={setPrice7dValue}
                         placeholder="0"
                     />
                 </div>
@@ -310,6 +331,7 @@ export function PricingSection({
             <input type="hidden" name="price_6h" value={price6hValue || 0} />
             <input type="hidden" name="price_1d" value={price1dValue || 0} />
             <input type="hidden" name="price_3d" value={price3dValue || 0} />
+            <input type="hidden" name="price_7d" value={price7dValue || 0} />
             <input type="hidden" name="deposit" value={depositValue} />
             <input type="hidden" name="apply_tax" value={(forceTaxIncluded || taxEnabled) ? '1' : '0'} />
             <input type="hidden" name="is_backup" value={isBackupMachine ? '1' : '0'} />

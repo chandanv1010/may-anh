@@ -103,6 +103,10 @@ export interface Product extends IDateTime {
     tags?: string[],
     apply_tax?: boolean,
     sale_tax_rate?: number,
+    price_6h?: number,
+    price_1d?: number,
+    price_3d?: number,
+    price_7d?: number,
     attributes?: Attribute[],
     variants?: ProductVariant[],
     warehouse_stocks?: WarehouseStock[],
@@ -172,6 +176,7 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
     const [pricing6h, setPricing6h] = useState<number>(record?.price_6h ?? 0)
     const [pricing1d, setPricing1d] = useState<number>(record?.price_1d ?? 0)
     const [pricing3d, setPricing3d] = useState<number>(record?.price_3d ?? 0)
+    const [pricing7d, setPricing7d] = useState<number>(record?.price_7d ?? 0)
     const [deposit, setDeposit] = useState<string>(record?.deposit ?? '')
     const [tagsDefault, setTagsDefault] = useState<string[]>(record?.tags || [])
     const taxPriceIncludes = !!tax?.price_includes_tax
@@ -293,6 +298,7 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
         setPricing6h(record.price_6h ?? 0)
         setPricing1d(record.price_1d ?? 0)
         setPricing3d(record.price_3d ?? 0)
+        setPricing7d(record.price_7d ?? 0)
         setDeposit(record.deposit ?? '')
         setPricingTiers(record.pricing_tiers || [])
         setTagsDefault(record.tags || [])
@@ -687,6 +693,7 @@ export default function ProductSave({ record, catalogues, brands = [], warehouse
                                                     price6h={pricing6h}
                                                     price1d={pricing1d}
                                                     price3d={pricing3d}
+                                                    price7d={pricing7d}
                                                     deposit={deposit}
                                                     pricingTiers={pricingTiers}
                                                     applyTax={record?.apply_tax}

@@ -286,6 +286,20 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
             />
             
             <style dangerouslySetInnerHTML={{ __html: `
+                .calendar-table {
+                    border-top: 1px solid #000000 !important;
+                    border-left: 1px solid #000000 !important;
+                }
+                .calendar-table th, .calendar-table td {
+                    border-right: 1px solid #000000 !important;
+                    border-bottom: 1px solid #000000 !important;
+                }
+                .calendar-table td {
+                    height: 1px;
+                }
+                .calendar-table .machine-col {
+                    padding: 4px 8px !important;
+                }
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 8px;
                     height: 8px;
@@ -323,7 +337,7 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
 }
 
 const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, getUserColor, onCellDoubleClick, currentUser, isSuperAdmin }: any) => {
-    const totalMinWidth = 200 + (days.length * slots.length * 32);
+    const totalMinWidth = 200 + (days.length * slots.length * 38);
     
     const [now, setNow] = useState(new Date());
     useEffect(() => {
@@ -338,33 +352,33 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
 
     return (
         <table 
-            className="border-collapse table-fixed border-spacing-0 mobile-zoom-table"
+            className="calendar-table border-collapse table-fixed border-spacing-0 mobile-zoom-table"
             style={{ width: 'max-content' }}
         >
             <colgroup>
                 <col className="machine-col" />
                 {days.flatMap((_: any, dIdx: number) => 
                     slots.map((_: any, sIdx: number) => (
-                        <col key={`${dIdx}-${sIdx}`} style={{ width: '36px' }} />
+                        <col key={`${dIdx}-${sIdx}`} style={{ width: '38px' }} />
                     ))
                 )}
             </colgroup>
             <thead className="sticky top-0 z-20 bg-slate-100 shadow-sm">
                 <tr>
                     <th 
-                        className="sticky left-0 z-30 bg-slate-100 border-r border-b p-2 text-xs font-bold text-slate-600 h-16 shadow-[2px_0_5px_rgba(0,0,0,0.05)] machine-col"
+                        className="sticky left-0 z-30 bg-slate-100 border-r border-b p-2 text-xs font-bold text-slate-600 h-12 shadow-[2px_0_5px_rgba(0,0,0,0.05)] machine-col"
                     >
                         Ngày<br/>Tên máy / Buổi
                     </th>
                     {days.map((day: any, idx: number) => (
-                        <th key={idx} id={isSameDay(day, now) ? 'today-col' : undefined} colSpan={slots.length} className={`border-r border-b p-1 text-center h-16 ${isSameDay(day, now) ? 'bg-blue-50' : ''}`}>
+                        <th key={idx} id={isSameDay(day, now) ? 'today-col' : undefined} colSpan={slots.length} className={`border-r border-b p-1 text-center h-12 ${isSameDay(day, now) ? 'bg-blue-50' : ''}`}>
                             <div className="text-sm font-bold text-slate-700">{format(day, 'dd', { locale: vi })}</div>
                             <div className="text-[10px] uppercase text-slate-500">{format(day, 'EEEE', { locale: vi })}</div>
                         </th>
                     ))}
                 </tr>
                 <tr className="bg-slate-50">
-                    <th className="sticky left-0 z-30 bg-slate-50 border-r border-b shadow-[2px_0_5px_rgba(0,0,0,0.05)] h-8 machine-col"></th>
+                    <th className="sticky left-0 z-30 bg-slate-50 border-r border-b shadow-[2px_0_5px_rgba(0,0,0,0.05)] h-6 machine-col"></th>
                     {days.map((day: any, dIdx: number) => (
                         <React.Fragment key={dIdx}>
                             {slots.map((slot: any, sIdx: number) => {
@@ -372,9 +386,9 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                 return (
                                     <th 
                                         key={`${dIdx}-${sIdx}`} 
-                                        style={{ width: '36px', minWidth: '36px' }}
+                                        style={{ width: '38px', minWidth: '38px' }}
                                         className={cn(
-                                            "border-r border-b text-[10px] font-bold text-slate-400 h-8",
+                                            "border-r border-b text-[10px] font-bold text-slate-400 h-6",
                                             isCurrentShift && "border-l-[2px] border-l-blue-600 relative z-20"
                                         )}
                                     >
@@ -426,17 +440,16 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                     const showPopover = !!(booking && booking.order && hasPermission);
 
                                     const innerBlock = (extraHandlers?: any) => (
-                                        <div className="relative w-full h-full p-0.5 min-h-[40px]">
+                                        <div className="relative w-full h-full min-h-[22px]">
                                             <div 
-                                                className="absolute inset-0.5 rounded-sm flex items-center justify-center shadow-sm transition-all"
+                                                className="absolute inset-0 flex items-center justify-center transition-all"
                                                 style={{
                                                     backgroundColor: cellColor,
-                                                    border: cellColor === '#ffffff' ? '1px solid #e2e8f0' : 'none',
                                                 }} 
                                                 {...extraHandlers}
                                             >
                                                 {booking && booking.status === 'maintenance' && (
-                                                    <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">BẢO TRÌ</span>
+                                                    <span className="text-[7px] font-black text-slate-800 uppercase tracking-tighter">BẢO TRÌ</span>
                                                 )}
                                             </div>
                                         </div>

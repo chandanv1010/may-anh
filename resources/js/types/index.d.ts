@@ -110,6 +110,7 @@ export interface Product extends IDateTime {
     price_6h?: number;
     price_1d?: number;
     price_3d?: number;
+    price_7d?: number;
     deposit?: string;
     product_catalogues?: any[];
     [key: string]: any;

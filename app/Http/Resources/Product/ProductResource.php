@@ -117,6 +117,7 @@ class ProductResource extends JsonResource
                    'price_6h' => $this->price_6h !== null ? (float) $this->price_6h : 0,
                    'price_1d' => $this->price_1d !== null ? (float) $this->price_1d : 0,
                    'price_3d' => $this->price_3d !== null ? (float) $this->price_3d : 0,
+                   'price_7d' => $this->price_7d !== null ? (float) $this->price_7d : 0,
                    'deposit' => $this->deposit,
                    'management_type' => $this->management_type,
                    'track_inventory' => (bool) $this->track_inventory,
