@@ -94,7 +94,7 @@ const TableRowComponent = React.memo(({
             <TableCell>{item.id}</TableCell>
             <TableCell>{item.name}</TableCell>
             <TableCell>{item.description}</TableCell>
-            <TableCell className="text-center">{item.creators.name}</TableCell>
+            <TableCell className="text-center">{item.creators?.name || 'N/A'}</TableCell>
             <TableCell className="text-center">{item.created_at}</TableCell>
             <TableCell className="text-center">{item.updated_at}</TableCell>
             <TableCell className="text-center">
