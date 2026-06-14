@@ -132,6 +132,28 @@ const mainNavItems: NavItem[] = [
         icon: Book,
         permission: 'cash_book:index'
     },
+    {
+        title: 'Quản Lý Hoa Hồng',
+        href: '/backend/commission',
+        icon: TrendingUp,
+    },
+    {
+        title: 'Cấu hình',
+        href: '#',
+        icon: Settings,
+        items: [
+            {
+                title: 'Cấu hình chung',
+                url: '/backend/setting/general',
+                permission: 'setting:index'
+            },
+            {
+                title: 'Cấu hình hệ thống',
+                url: '/backend/system/catalogue',
+                permission: 'setting:index'
+            }
+        ]
+    },
 ];
 
 const footerNavItems: NavItem[] = [

@@ -40,6 +40,9 @@ class SystemSeeder extends Seeder
         ];
         $this->createSystem($websiteCat->id, 'Loại đường dẫn', 'url_type', 'select', 'Định dạng URL cho frontend', 6, $userId, 0, ['options' => $urlTypeOptions]);
 
+        // Commission settings
+        $this->createSystem($websiteCat->id, 'Phần trăm hoa hồng cho quản lý', 'manager_commission_rate', 'text', 'Tỉ lệ % hoa hồng mà quản lý nhận được từ đơn hàng của nhân sự cấp dưới', 7, $userId, 0);
+
         // 2. Contact
         $contactCat = SystemCatalogue::firstOrCreate(
             ['keyword' => 'contact_info'],

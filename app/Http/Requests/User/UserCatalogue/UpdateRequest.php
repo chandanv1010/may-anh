@@ -35,6 +35,7 @@ class UpdateRequest extends FormRequest
                 Rule::unique('user_catalogues')->ignore($this->route('user_catalogue'))
             ],
             'description' => 'nullable|string',
+            'commission_rate' => 'sometimes|nullable|numeric|min:0|max:100',
             'publish' => 'sometimes|in:1,2'
         ];
     }

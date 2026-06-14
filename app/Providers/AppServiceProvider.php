@@ -118,6 +118,8 @@ use App\Services\Impl\V1\Inventory\InventoryService;
 use App\Services\Interfaces\Booking\BookingServiceInterface;
 use App\Services\Impl\V1\Booking\BookingService;
 use App\Repositories\Booking\BookingRepo;
+use App\Services\Interfaces\CommissionServiceInterface;
+use App\Services\Impl\V1\Commission\CommissionService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -212,6 +214,9 @@ class AppServiceProvider extends ServiceProvider
         // Booking Module
         $this->app->bind(BookingServiceInterface::class, BookingService::class);
         $this->app->bind(BookingRepo::class);
+
+        // Commission Module
+        $this->app->bind(CommissionServiceInterface::class, CommissionService::class);
     }
 
     /**

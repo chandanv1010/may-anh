@@ -27,6 +27,7 @@ class StoreRequest extends FormRequest
             'name' => "required|string",
             'canonical' => "required|string|unique:user_catalogues",
             'description' => 'nullable|string',
+            'commission_rate' => 'nullable|numeric|min:0|max:100',
             'permissions' => 'required|array|min:1',
             'permissions.*' => 'integer'
         ];

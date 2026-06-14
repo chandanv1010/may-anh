@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -33,6 +34,7 @@ class User extends Authenticatable
         'birthday',
         'description',
         'user_id',
+        'parent_id',
         'publish',
         'color',
     ];
@@ -73,6 +75,14 @@ class User extends Authenticatable
 
     public function creators(): BelongsTo{
         return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function manager(): BelongsTo {
+        return $this->belongsTo(User::class, 'parent_id', 'id');
+    }
+
+    public function subordinates(): HasMany {
+        return $this->hasMany(User::class, 'parent_id');
     }
 
     public function getRelationable(){

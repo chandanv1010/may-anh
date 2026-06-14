@@ -54,6 +54,7 @@ require __DIR__.'/route/banner.php';
 require __DIR__.'/route/review.php';
 require __DIR__.'/route/widget.php';
 require __DIR__.'/route/booking.php';
+require __DIR__.'/route/commission.php';
 
 /* 
 // Disable Frontend routes

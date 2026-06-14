@@ -48,8 +48,9 @@ const pageConfig: PageConfig<UserCatalogue> = {
     columns: [
         { key: 'checkbox', label: '', className: 'w-[60px]' },
         { key: 'id', label: 'ID', className: 'w-[60px]' },
-        { key: 'name', label: 'Tên nhóm', className: 'w-[25%]' },
+        { key: 'name', label: 'Tên nhóm', className: 'w-[20%]' },
         { key: 'description', label: 'Mô tả', className: '' },
+        { key: 'commission_rate', label: '% Hoa hồng', className: 'text-center' },
         { key: 'creator', label: 'Người tạo', className: 'text-center' },
         { key: 'created_at', label: 'Ngày tạo', className: 'text-center' },
         { key: 'updated_at', label: 'Ngày sửa', className: 'text-center' },
@@ -94,6 +95,7 @@ const TableRowComponent = React.memo(({
             <TableCell>{item.id}</TableCell>
             <TableCell>{item.name}</TableCell>
             <TableCell>{item.description}</TableCell>
+            <TableCell className="text-center">{item.commission_rate ?? '0.00'}%</TableCell>
             <TableCell className="text-center">{item.creators?.name || 'N/A'}</TableCell>
             <TableCell className="text-center">{item.created_at}</TableCell>
             <TableCell className="text-center">{item.updated_at}</TableCell>

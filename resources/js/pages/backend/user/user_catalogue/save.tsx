@@ -78,6 +78,7 @@ export interface UserCatalogue extends IDateTime{
     name: string,
     canonical: string,
     description: string,
+    commission_rate?: string | number,
     publish: string,
     creators: User,
     permissions: Permission[]
@@ -215,9 +216,9 @@ export default function UserCatalogueSave({record, permissions}: UserCatalogueSa
                                             description="Nhập đầy đủ các thông tin trong các trường dưới dây"
                                             className="mb-[20px]"
                                         >
-                                            <div className="grid grid-cols-2 gap-4 mb-[20px]">
+                                            <div className="grid grid-cols-3 gap-4 mb-[20px]">
                                                 <div className="col-span-1">
-                                                    <Label htmlFor="email" className="mb-[10px]">Tên nhóm thành viên</Label>
+                                                    <Label htmlFor="name" className="mb-[10px]">Tên nhóm thành viên</Label>
                                                     <Input
                                                         id="name"
                                                         type="text"
@@ -242,6 +243,22 @@ export default function UserCatalogueSave({record, permissions}: UserCatalogueSa
                                                         defaultValue={record?.canonical}
                                                     />
                                                     <InputError message={errors.canonical} className="mt-[5px]" />
+                                                </div>
+                                                <div className="col-span-1">
+                                                    <Label htmlFor="commission_rate" className="mb-[10px]">Tỉ lệ hoa hồng (%)</Label>
+                                                    <Input
+                                                        id="commission_rate"
+                                                        type="number"
+                                                        name="commission_rate"
+                                                        step="0.01"
+                                                        min="0"
+                                                        max="100"
+                                                        tabIndex={1}
+                                                        autoComplete="off"
+                                                        placeholder="Ví dụ: 5.5"
+                                                        defaultValue={record?.commission_rate}
+                                                    />
+                                                    <InputError message={errors.commission_rate} className="mt-[5px]" />
                                                 </div>
                                             </div>
                                             <div>

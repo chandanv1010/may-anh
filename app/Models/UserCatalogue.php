@@ -16,6 +16,7 @@ class UserCatalogue extends Model
         'name',
         'canonical',
         'description',
+        'commission_rate',
         'publish',
         'user_id',
         'deleted_at'

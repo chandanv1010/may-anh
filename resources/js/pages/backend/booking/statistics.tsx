@@ -1,32 +1,23 @@
 import React, { useState, useMemo } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { 
     format, 
     parseISO, 
-    isSameMonth
 } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { 
     TrendingUp, 
     Users, 
-    Camera, 
     Search,
     DollarSign,
     ShoppingBag,
     Calendar as CalendarIcon,
-    User as UserIcon,
-    Clock,
-    UserCheck,
-    ChevronRight
 } from 'lucide-react';
 import { DateRange } from "react-day-picker";
-import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { 
     Card, 
     CardContent, 
-    CardHeader,
-    CardTitle
 } from '@/components/ui/card';
 import {
     Table,
@@ -50,25 +41,66 @@ import { cn } from '@/lib/utils';
 interface StatisticsProps {
     orders: any[];
     users: any[];
+    filteredUsers: any[];
     machines: any[];
     isSuperAdmin: boolean;
+    request: {
+        month: string;
+        user_id: string;
+    };
 }
 
-const Statistics = ({ orders, users, machines, isSuperAdmin }: StatisticsProps) => {
+const Statistics = ({ orders, users, filteredUsers = [], machines, isSuperAdmin, request }: StatisticsProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
-    const [userFilter, setUserFilter] = useState('all');
-    const [timeRange, setTimeRange] = useState('all');
-    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
-    const getOrderStartDate = (order: any) => {
-        if (!order.bookings || order.bookings.length === 0) return order.created_at;
-        const dates = order.bookings.map((b: any) => b.booking_date).sort();
-        return dates[0];
+    // Parse Month and Year from request.month (e.g. '2026-06')
+    const [selectedYear, selectedMonth] = useMemo(() => {
+        const parts = (request.month || '').split('-');
+        if (parts.length === 2) {
+            return [parts[0], parseInt(parts[1]).toString()];
+        }
+        const now = new Date();
+        return [now.getFullYear().toString(), (now.getMonth() + 1).toString()];
+    }, [request.month]);
+
+    const months = Array.from({ length: 12 }, (_, i) => i + 1);
+    const years = Array.from({ length: 7 }, (_, i) => 2024 + i); // 2024 to 2030
+
+    const handleTimeChange = (newMonth: string, newYear: string) => {
+        const formattedMonth = newMonth.padStart(2, '0');
+        router.get('/backend/booking/statistics', {
+            month: `${newYear}-${formattedMonth}`,
+            user_id: request.user_id || 'all'
+        });
     };
 
-    const getUser = (userId: number) => {
-        return users.find(u => u.id === userId) || { name: 'N/A', color: '#cbd5e1' };
+    const handleUserChange = (newUserId: string) => {
+        router.get('/backend/booking/statistics', {
+            month: request.month,
+            user_id: newUserId
+        });
+    };
+
+    const { startOfMonthDate, endOfMonthDate } = useMemo(() => {
+        const parts = (request.month || '').split('-');
+        let year = new Date().getFullYear();
+        let monthNum = new Date().getMonth();
+        if (parts.length === 2) {
+            year = parseInt(parts[0]);
+            monthNum = parseInt(parts[1]) - 1;
+        }
+        const from = new Date(year, monthNum, 1);
+        const to = new Date(year, monthNum + 1, 0, 23, 59, 59, 999);
+        return { startOfMonthDate: from, endOfMonthDate: to };
+    }, [request.month]);
+
+    const getOrderStartDate = (order: any) => {
+        if (!order.bookings || order.bookings.length === 0) {
+            return (order.created_at || '').substring(0, 10);
+        }
+        const dates = order.bookings.map((b: any) => b.booking_date).sort();
+        return dates[0];
     };
 
     const getRentalDuration = (bookings: any[]) => {
@@ -94,7 +126,7 @@ const Statistics = ({ orders, users, machines, isSuperAdmin }: StatisticsProps) 
     };
 
     const getDistributedRevenue = (order: any, fromDate?: Date, toDate?: Date) => {
-        if (!order.bookings || order.bookings.length === 0) return { period: order.final_amount, total: order.final_amount };
+        if (!order.bookings || order.bookings.length === 0) return { period: Number(order.final_amount), total: Number(order.final_amount) };
         
         const totalSlots = order.bookings.length;
         const amountPerSlot = Number(order.final_amount) / totalSlots;
@@ -115,60 +147,13 @@ const Statistics = ({ orders, users, machines, isSuperAdmin }: StatisticsProps) 
         };
     };
 
-    const currentRange = useMemo(() => {
-        const now = new Date();
-        let from: Date | undefined = undefined;
-        let to: Date | undefined = new Date();
-        to.setHours(23, 59, 59, 999);
-
-        if (timeRange === '7d') {
-            from = new Date();
-            from.setDate(now.getDate() - 7);
-            from.setHours(0, 0, 0, 0);
-        } else if (timeRange === '15d') {
-            from = new Date();
-            from.setDate(now.getDate() - 15);
-            from.setHours(0, 0, 0, 0);
-        } else if (timeRange === '30d') {
-            from = new Date();
-            from.setDate(now.getDate() - 30);
-            from.setHours(0, 0, 0, 0);
-        } else if (timeRange === '90d') {
-            from = new Date();
-            from.setDate(now.getDate() - 90);
-            from.setHours(0, 0, 0, 0);
-        } else if (timeRange === 'custom') {
-            from = dateRange?.from;
-            to = dateRange?.to ? new Date(dateRange.to) : undefined;
-            if (to) to.setHours(23, 59, 59, 999);
-        } else {
-            // all time
-            from = undefined;
-            to = undefined;
-        }
-        return { from, to };
-    }, [timeRange, dateRange]);
-
     const filteredOrders = useMemo(() => {
         return orders.filter(order => {
             const matchesSearch = order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) || order.customer_phone?.includes(searchTerm);
             const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-            const matchesUser = userFilter === 'all' || order.staff_chot_id === parseInt(userFilter);
-            
-            // Lọc theo thời gian: Đơn hàng có bất kỳ booking nào trong khoảng thời gian này
-            let matchesTime = true;
-            if (currentRange.from || currentRange.to) {
-                matchesTime = order.bookings.some((b: any) => {
-                    const bDate = parseISO(b.booking_date);
-                    if (currentRange.from && bDate < currentRange.from) return false;
-                    if (currentRange.to && bDate > currentRange.to) return false;
-                    return true;
-                });
-            }
-            
-            return matchesSearch && matchesStatus && matchesUser && matchesTime;
+            return matchesSearch && matchesStatus;
         });
-    }, [orders, searchTerm, statusFilter, userFilter, currentRange]);
+    }, [orders, searchTerm, statusFilter]);
 
     const groupedOrders = useMemo(() => {
         const groups: { [key: string]: any[] } = {};
@@ -187,7 +172,7 @@ const Statistics = ({ orders, users, machines, isSuperAdmin }: StatisticsProps) 
         let totalFull = 0;
         
         realOrders.forEach(order => {
-            const { period, total } = getDistributedRevenue(order, currentRange.from, currentRange.to);
+            const { period, total } = getDistributedRevenue(order, startOfMonthDate, endOfMonthDate);
             totalPeriod += period;
             totalFull += total;
         });
@@ -195,7 +180,7 @@ const Statistics = ({ orders, users, machines, isSuperAdmin }: StatisticsProps) 
         const count = realOrders.length;
         const avg = count > 0 ? totalPeriod / count : 0;
         return { total: totalFull, final: totalPeriod, count, avg };
-    }, [filteredOrders, currentRange]);
+    }, [filteredOrders, startOfMonthDate, endOfMonthDate]);
 
     const formatCurrency = (value: number) => {
         if (isNaN(value)) return '0 ₫';
@@ -205,24 +190,82 @@ const Statistics = ({ orders, users, machines, isSuperAdmin }: StatisticsProps) 
     const getStatusBadge = (status: string, customerName: string) => {
         if (status === 'maintenance' || customerName === 'BẢO TRÌ') {
             return (
-                <Badge variant="outline" className="font-bold text-[10px] uppercase px-2 py-0.5 bg-slate-50 text-slate-400 border-slate-200">
+                <Badge variant="outline" className="font-black text-[9px] uppercase px-1.5 py-0.5 bg-slate-100 text-slate-400 border-slate-300">
                     Bảo trì
                 </Badge>
             );
         }
         const configs: { [key: string]: { label: string, color: string } } = {
             'pending': { label: 'Chờ giao', color: 'bg-amber-100 text-amber-700 border-amber-200' },
-            'renting': { label: 'Đang thuê', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-            'finished': { label: 'Hoàn thành', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-            'canceled': { label: 'Đã hủy', color: 'bg-rose-100 text-rose-700 border-rose-200' }
+            'renting': { label: 'Đang thuê', color: 'bg-rose-100 text-rose-700 border-rose-200' },
+            'finished': { label: 'Xong', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+            'cancelled': { label: 'Đã hủy', color: 'bg-slate-200 text-slate-600 border-slate-300' },
+            'canceled': { label: 'Đã hủy', color: 'bg-slate-200 text-slate-600 border-slate-300' }
         };
         const config = configs[status] || { label: status, color: 'bg-slate-100 text-slate-700 border-slate-200' };
         return (
-            <Badge variant="outline" className={cn("font-bold text-[10px] uppercase px-2 py-0.5", config.color)}>
+            <Badge variant="outline" className={cn("font-black text-[9px] uppercase px-1.5 py-0.5", config.color)}>
                 {config.label}
             </Badge>
         );
     };
+
+    const getRowBgClass = (status: string, customerName: string) => {
+        if (status === 'maintenance' || customerName === 'BẢO TRÌ') {
+            return 'bg-slate-50/70 hover:bg-slate-100/90 text-slate-400';
+        }
+        switch (status) {
+            case 'pending':
+                return 'bg-amber-50/70 hover:bg-amber-100/70 text-amber-900';
+            case 'renting':
+                return 'bg-rose-50/50 hover:bg-rose-100/60 text-rose-900';
+            case 'finished':
+                return 'bg-emerald-50/50 hover:bg-emerald-100/60 text-emerald-900';
+            case 'cancelled':
+            case 'canceled':
+                return 'bg-slate-100/60 hover:bg-slate-200/50 text-slate-400';
+            default:
+                return 'hover:bg-slate-50';
+        }
+    };
+
+    const renderStaffBadge = (staff: any) => {
+        if (!staff) return <span className="text-slate-300">-</span>;
+        return (
+            <Badge 
+                variant="secondary" 
+                className="text-[9px] font-black text-white border-none px-2 py-0.5 whitespace-nowrap"
+                style={{ backgroundColor: staff.color || '#94a3b8' }}
+            >
+                {staff.name}
+            </Badge>
+        );
+    };
+
+    const getCommissionForUser = (order: any, userId: number) => {
+        if (!order.commissions) return 0;
+        return order.commissions
+            .filter((c: any) => c.user_id === userId)
+            .reduce((sum: number, c: any) => sum + Number(c.commission_amount), 0);
+    };
+
+    // Calculate Grand Totals for displayed orders
+    const totalRentPrice = useMemo(() => {
+        return filteredOrders.reduce((sum, order) => {
+            if (order.status === 'maintenance' || order.customer_name === 'BẢO TRÌ') return sum;
+            return sum + Number(order.final_amount || 0);
+        }, 0);
+    }, [filteredOrders]);
+
+    const userCommissionTotals = useMemo(() => {
+        const totals: { [key: number]: number } = {};
+        filteredUsers.forEach((user: any) => {
+            totals[user.id] = filteredOrders.reduce((sum, order) => {
+                return sum + getCommissionForUser(order, user.id);
+            }, 0);
+        });
+        return totals;
+    }, [filteredOrders, filteredUsers]);
 
     return (
         <AppLayout>
@@ -241,48 +284,63 @@ const Statistics = ({ orders, users, machines, isSuperAdmin }: StatisticsProps) 
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <Input 
                                 placeholder="Tìm khách hàng..." 
-                                className="pl-9 w-64 bg-white border-slate-200 h-10 shadow-sm"
+                                className="pl-9 w-48 bg-white border-slate-200 h-10 shadow-sm"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <Select value={timeRange} onValueChange={setTimeRange}>
-                            <SelectTrigger className="w-40 bg-white border-slate-200 h-10 shadow-sm">
-                                <SelectValue placeholder="Khoảng thời gian" />
+
+                        {/* Month Selector */}
+                        <Select value={selectedMonth} onValueChange={(val) => handleTimeChange(val, selectedYear)}>
+                            <SelectTrigger className="w-28 bg-white border-slate-200 h-10 shadow-sm">
+                                <SelectValue placeholder="Tháng" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Tất cả thời gian</SelectItem>
-                                <SelectItem value="7d">7 ngày qua</SelectItem>
-                                <SelectItem value="15d">15 ngày qua</SelectItem>
-                                <SelectItem value="30d">30 ngày qua</SelectItem>
-                                <SelectItem value="90d">90 ngày qua</SelectItem>
-                                <SelectItem value="custom">Tùy chọn ngày</SelectItem>
+                                {months.map(m => (
+                                    <SelectItem key={m} value={m.toString()}>Tháng {m}</SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
 
-                        {timeRange === 'custom' && (
-                            <div className="animate-in fade-in slide-in-from-right-2 duration-300">
-                                <DatePickerWithRange 
-                                    date={dateRange} 
-                                    setDate={setDateRange}
-                                    className="bg-white"
-                                />
-                            </div>
-                        )}
+                        {/* Year Selector */}
+                        <Select value={selectedYear} onValueChange={(val) => handleTimeChange(selectedMonth, val)}>
+                            <SelectTrigger className="w-28 bg-white border-slate-200 h-10 shadow-sm">
+                                <SelectValue placeholder="Năm" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {years.map(y => (
+                                    <SelectItem key={y} value={y.toString()}>Năm {y}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
 
-                        {isSuperAdmin && (
-                            <Select value={userFilter} onValueChange={setUserFilter}>
-                                <SelectTrigger className="w-40 bg-white border-slate-200 h-10 shadow-sm">
-                                    <SelectValue placeholder="Nhân viên" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Tất cả NV</SelectItem>
-                                    {users.map(u => (
-                                        <SelectItem key={u.id} value={u.id.toString()}>{u.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        )}
+                        {/* Status Filter */}
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="w-32 bg-white border-slate-200 h-10 shadow-sm">
+                                <SelectValue placeholder="Trạng thái" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                                <SelectItem value="pending">Chờ giao</SelectItem>
+                                <SelectItem value="renting">Đang thuê</SelectItem>
+                                <SelectItem value="finished">Xong</SelectItem>
+                                <SelectItem value="cancelled">Đã hủy</SelectItem>
+                                <SelectItem value="maintenance">Bảo trì</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        {/* Personnel Filter */}
+                        <Select value={request.user_id || 'all'} onValueChange={handleUserChange}>
+                            <SelectTrigger className="w-40 bg-white border-slate-200 h-10 shadow-sm">
+                                <SelectValue placeholder="Nhân viên" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tất cả NV</SelectItem>
+                                {users.map(u => (
+                                    <SelectItem key={u.id} value={u.id.toString()}>{u.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 
@@ -331,109 +389,157 @@ const Statistics = ({ orders, users, machines, isSuperAdmin }: StatisticsProps) 
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader className="bg-slate-50 border-b border-slate-200">
+                                {/* Row 1: Headers */}
                                 <TableRow>
                                     <TableHead className="w-8 text-center text-[10px] font-black uppercase text-slate-500 pr-0">#</TableHead>
-                                    <TableHead className="w-[280px] text-[10px] font-black uppercase text-slate-500">Khách hàng</TableHead>
-                                    <TableHead className="w-[180px] text-[10px] font-black uppercase text-slate-500">Thời gian</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase text-slate-500">Tên máy</TableHead>
+                                    <TableHead className="w-[120px] text-[10px] font-black uppercase text-slate-500">Thời gian</TableHead>
+                                    <TableHead className="w-[120px] text-[10px] font-black uppercase text-slate-500">Tên máy</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase text-slate-500">NV Chốt</TableHead>
-                                    <TableHead className="text-right text-[10px] font-black uppercase text-slate-500">Thành tiền</TableHead>
-                                    <TableHead className="text-center text-[10px] font-black uppercase text-slate-500">Trạng thái</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-slate-500">Giao máy</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-slate-500">Giao khách</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-slate-500">NV Nhận</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-slate-500">NV Giữ</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-slate-500">Trạng thái</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase text-slate-500">Ghi chú</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-slate-500">Cọc</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase text-slate-500">Giá thuê</TableHead>
+                                    {filteredUsers.map((user: any) => (
+                                        <TableHead key={user.id} className="text-right text-[10px] font-black uppercase text-slate-500 min-w-[100px]">
+                                            {user.name}
+                                        </TableHead>
+                                    ))}
+                                </TableRow>
+                                {/* Row 2: Grand Totals */}
+                                <TableRow className="bg-slate-100/50 border-b border-slate-200 font-semibold text-slate-700">
+                                    <TableCell colSpan={11} className="py-2.5 text-right text-[10px] uppercase tracking-wider text-slate-500 font-black pr-4">
+                                        Tổng cộng:
+                                    </TableCell>
+                                    <TableCell className="py-2.5 text-right text-xs font-black text-rose-600 bg-rose-50/30">
+                                        {formatCurrency(totalRentPrice)}
+                                    </TableCell>
+                                    {filteredUsers.map((user: any) => (
+                                        <TableCell key={user.id} className="py-2.5 text-right text-xs font-black text-rose-600 bg-rose-50/30">
+                                            {formatCurrency(userCommissionTotals[user.id] || 0)}
+                                        </TableCell>
+                                    ))}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {groupedOrders.length > 0 ? groupedOrders.map(([date, items], gIdx) => (
-                                    <React.Fragment key={date}>
-                                        {/* Group Header Row */}
-                                        <TableRow className="bg-slate-50/80 border-b border-slate-200">
-                                            <TableCell colSpan={8} className="py-2.5 px-4">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center space-x-2 text-slate-600">
-                                                        <CalendarIcon size={14} />
-                                                        <span className="text-xs font-black uppercase tracking-widest">
-                                                            Ngày {format(parseISO(date), 'dd/MM/yyyy', { locale: vi })}
-                                                        </span>
-                                                    </div>
-                                                    <div className="text-xs font-bold text-blue-700">
-                                                        Tổng cộng ngày: {formatCurrency(items.reduce((s, i) => s + Number(i.final_amount || 0), 0))}
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                        
-                                        {/* Order Rows */}
-                                        {items.map((order, oIdx) => {
-                                            const staff = getUser(order.staff_chot_id);
-                                            return (
-                                                <TableRow key={order.id} className="hover:bg-slate-50/50 border-b border-slate-100 last:border-b-0 transition-colors">
-                                                    <TableCell className="text-center text-[10px] font-bold text-slate-400 pr-0">
-                                                        {(gIdx * 0) + oIdx + 1}
-                                                    </TableCell>
-                                                    <TableCell className="py-3">
-                                                        <div className="font-bold text-slate-900">{order.customer_name}</div>
-                                                        <div className="text-[10px] text-slate-500 font-medium">{order.customer_phone}</div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex items-center space-x-2">
-                                                            <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[10px] font-black border border-slate-200">
-                                                                {getRentalDuration(order.bookings)}
-                                                            </span>
-                                                            <span className="text-[10px] font-bold text-slate-500 tracking-tight">
-                                                                :{getRentalRange(order.bookings)}
+                                {groupedOrders.length > 0 ? groupedOrders.map(([date, items], gIdx) => {
+                                    // Calculate group totals
+                                    const groupTotalRent = items.reduce((sum, order) => {
+                                        if (order.status === 'maintenance' || order.customer_name === 'BẢO TRÌ') return sum;
+                                        return sum + Number(order.final_amount || 0);
+                                    }, 0);
+
+                                    return (
+                                        <React.Fragment key={date}>
+                                            {/* Group Header Row */}
+                                            <TableRow className="bg-slate-50/80 border-b border-slate-200">
+                                                <TableCell colSpan={12 + filteredUsers.length} className="py-2.5 px-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center space-x-2 text-slate-600">
+                                                            <CalendarIcon size={14} />
+                                                            <span className="text-xs font-black uppercase tracking-widest">
+                                                                Ngày {format(parseISO(date), 'dd/MM/yyyy', { locale: vi })}
                                                             </span>
                                                         </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex items-center space-x-2">
-                                                            <div className="text-slate-300"><Camera size={14} /></div>
-                                                            <span className="text-xs font-semibold text-slate-700 truncate max-w-[150px]" title={order.bookings?.[0]?.product?.name}>
-                                                                {order.bookings?.[0]?.product?.name || 'N/A'}
-                                                            </span>
+                                                        <div className="text-xs font-bold text-blue-700">
+                                                            Tổng cộng ngày: {formatCurrency(groupTotalRent)}
                                                         </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge 
-                                                            variant="secondary" 
-                                                            className="text-[9px] font-black text-white border-none px-2 py-0.5"
-                                                            style={{ backgroundColor: staff.color }}
-                                                        >
-                                                            {staff.name}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        {(order.status === 'maintenance' || order.customer_name === 'BẢO TRÌ') ? (
-                                                            <div className="text-sm font-bold text-slate-300">-</div>
-                                                        ) : (() => {
-                                                            const { period, total, isSplit } = getDistributedRevenue(order, currentRange.from, currentRange.to);
-                                                            return (
-                                                                <>
-                                                                    <div className="text-sm font-black text-slate-900">{formatCurrency(period)}</div>
-                                                                    {isSplit && (
-                                                                        <div className="text-[9px] text-slate-400 font-medium">Tổng: {formatCurrency(total)}</div>
-                                                                    )}
-                                                                    {order.discount_amount > 0 && !isSplit && (
-                                                                        <div className="text-[9px] text-rose-500 line-through">-{formatCurrency(order.discount_amount)}</div>
-                                                                    )}
-                                                                </>
-                                                            );
-                                                        })()}
-                                                    </TableCell>
-                                                    <TableCell className="text-center">
-                                                        {getStatusBadge(order.status, order.customer_name)}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="text-[10px] text-slate-400 max-w-[120px] truncate" title={order.notes}>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                            
+                                            {/* Order Rows */}
+                                            {items.map((order, oIdx) => {
+                                                return (
+                                                    <TableRow 
+                                                        key={order.id} 
+                                                        className={cn("border-b border-slate-100 last:border-b-0 transition-colors font-medium text-xs", getRowBgClass(order.status, order.customer_name))}
+                                                    >
+                                                        <TableCell className="text-center text-[10px] font-bold text-slate-400 pr-0">
+                                                            {oIdx + 1}
+                                                        </TableCell>
+                                                        <TableCell className="py-3 font-semibold whitespace-nowrap">
+                                                            <div className="flex items-center space-x-2">
+                                                                <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[10px] font-black border border-slate-200">
+                                                                    {getRentalDuration(order.bookings)}
+                                                                </span>
+                                                                <span className="text-[10px] font-bold text-slate-500 tracking-tight">
+                                                                    :{getRentalRange(order.bookings)}
+                                                                </span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="py-3 font-semibold truncate max-w-[140px]" title={order.bookings?.[0]?.product?.name}>
+                                                            {order.bookings?.[0]?.product?.name || 'N/A'}
+                                                        </TableCell>
+                                                        <TableCell className="py-3">
+                                                            {renderStaffBadge(order.staff_chot)}
+                                                        </TableCell>
+                                                        <TableCell className="py-3">
+                                                            {renderStaffBadge(order.staff_giao_may)}
+                                                        </TableCell>
+                                                        <TableCell className="py-3">
+                                                            {renderStaffBadge(order.staff_giao_khach)}
+                                                        </TableCell>
+                                                        <TableCell className="py-3">
+                                                            {renderStaffBadge(order.staff_nhan)}
+                                                        </TableCell>
+                                                        <TableCell className="py-3">
+                                                            {renderStaffBadge(order.staff_giu)}
+                                                        </TableCell>
+                                                        <TableCell className="py-3 text-center">
+                                                            {getStatusBadge(order.status, order.customer_name)}
+                                                        </TableCell>
+                                                        <TableCell className="py-3 text-[10px] max-w-[120px] truncate" title={order.notes}>
                                                             {order.notes || '---'}
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
-                                    </React.Fragment>
-                                )) : (
+                                                        </TableCell>
+                                                        <TableCell className="py-3 text-[10px] text-slate-600 font-bold whitespace-nowrap">
+                                                            {order.deposit_info || '---'}
+                                                        </TableCell>
+                                                        <TableCell className="py-3 text-right font-black">
+                                                            {order.status === 'maintenance' || order.customer_name === 'BẢO TRÌ' ? (
+                                                                <span className="text-slate-300">-</span>
+                                                            ) : (
+                                                                formatCurrency(order.final_amount)
+                                                            )}
+                                                        </TableCell>
+                                                        {/* Dynamic Collaborator Commission Cells */}
+                                                        {filteredUsers.map((user: any) => {
+                                                            const comm = getCommissionForUser(order, user.id);
+                                                            return (
+                                                                <TableCell key={user.id} className="py-3 text-right font-bold text-slate-800">
+                                                                    {comm > 0 ? formatCurrency(comm) : '0'}
+                                                                </TableCell>
+                                                            );
+                                                        })}
+                                                    </TableRow>
+                                                );
+                                            })}
+
+                                            {/* Grey Sub-total Row */}
+                                            <TableRow className="bg-slate-100/80 border-b border-slate-200 font-semibold text-slate-700">
+                                                <TableCell colSpan={11} className="py-2.5 text-right text-[10px] uppercase tracking-wider text-slate-500 font-black pr-4">
+                                                    Cộng ngày:
+                                                </TableCell>
+                                                <TableCell className="py-2.5 text-right text-xs font-black text-slate-900 bg-slate-200/50">
+                                                    {formatCurrency(groupTotalRent)}
+                                                </TableCell>
+                                                {filteredUsers.map((user: any) => {
+                                                    const groupUserComm = items.reduce((sum, order) => sum + getCommissionForUser(order, user.id), 0);
+                                                    return (
+                                                        <TableCell key={user.id} className="py-2.5 text-right text-xs font-black text-slate-900 bg-slate-200/50">
+                                                            {groupUserComm > 0 ? formatCurrency(groupUserComm) : '0'}
+                                                        </TableCell>
+                                                    );
+                                                })}
+                                            </TableRow>
+                                        </React.Fragment>
+                                    );
+                                }) : (
                                     <TableRow>
-                                        <TableCell colSpan={8} className="py-20 text-center text-slate-400">
+                                        <TableCell colSpan={12 + filteredUsers.length} className="py-20 text-center text-slate-400">
                                             Không có dữ liệu đơn hàng phù hợp.
                                         </TableCell>
                                     </TableRow>

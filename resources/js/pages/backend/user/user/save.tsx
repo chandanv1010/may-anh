@@ -38,9 +38,10 @@ const pageConfig: PageConfig<User> = {
 
 interface UserSaveProps {
     record?: User,
-    userCatalogues: UserCatalogue[]
+    userCatalogues: UserCatalogue[],
+    usersList?: User[]
 }
-export default function UserSave({record, userCatalogues}: UserSaveProps) {
+export default function UserSave({record, userCatalogues, usersList = []}: UserSaveProps) {
 
 
     const buttonAction = useRef("")
@@ -51,13 +52,18 @@ export default function UserSave({record, userCatalogues}: UserSaveProps) {
     } = useFormDateEmitter()
 
     const userCatalogueOptions = useMemo(() => {
-
         return userCatalogues.map(item => ({
             label: item.name,
             value: item.id.toString()
         }))
-
     }, [userCatalogues]);
+
+    const filteredManagers = useMemo(() => {
+        if (isEdit && record) {
+            return usersList.filter(u => u.id !== record.id);
+        }
+        return usersList;
+    }, [usersList, isEdit, record]);
 
    
     return (
@@ -220,7 +226,7 @@ export default function UserSave({record, userCatalogues}: UserSaveProps) {
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-1 mb-[20px]">
+                                            <div className="grid grid-cols-2 gap-4 mb-[20px]">
                                                 <div className="col-span-1">
                                                     <Label className="mb-[10px]">Chọn nhóm thành viên</Label>
                                                     <MultiSelect
@@ -230,6 +236,24 @@ export default function UserSave({record, userCatalogues}: UserSaveProps) {
                                                         variant="inverted"
                                                     />
                                                     <InputError message={errors.user_catalogues} className="mt-[5px]" />
+                                                </div>
+                                                <div className="col-span-1">
+                                                    <Label htmlFor="parent_id" className="mb-[10px]">Người quản lý</Label>
+                                                    <select
+                                                        id="parent_id"
+                                                        name="parent_id"
+                                                        value={formDataEmitter.parent_id ?? record?.parent_id ?? ''}
+                                                        onChange={(e) => handleEmitterChange('parent_id', e.target.value)}
+                                                        className="w-full flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
+                                                    >
+                                                        <option value="">-- Chọn người quản lý --</option>
+                                                        {filteredManagers.map(item => (
+                                                            <option key={item.id} value={item.id}>
+                                                                {item.name} ({item.email})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <InputError message={errors.parent_id} className="mt-[5px]" />
                                                 </div>
                                             </div>
                                            

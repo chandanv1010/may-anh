@@ -35,9 +35,37 @@ class BookingOrder extends Model
         'image',
     ];
 
+    protected static function booted()
+    {
+        static::updated(function ($order) {
+            if ($order->wasChanged('status')) {
+                $oldStatus = $order->getOriginal('status');
+                $newStatus = $order->status;
+                
+                $commissionService = app(\App\Services\Interfaces\CommissionServiceInterface::class);
+                if ($newStatus === 'finished' && $oldStatus !== 'finished') {
+                    $commissionService->calculate($order);
+                } elseif ($oldStatus === 'finished' && $newStatus !== 'finished') {
+                    $commissionService->refund($order);
+                }
+            }
+        });
+
+        static::created(function ($order) {
+            if ($order->status === 'finished') {
+                app(\App\Services\Interfaces\CommissionServiceInterface::class)->calculate($order);
+            }
+        });
+    }
+
     public function bookings()
     {
         return $this->hasMany(ProductBooking::class);
+    }
+
+    public function commissions()
+    {
+        return $this->hasMany(CommissionHistory::class, 'booking_order_id');
     }
 
     public function staffChot()

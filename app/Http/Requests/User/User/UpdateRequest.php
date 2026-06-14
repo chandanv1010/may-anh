@@ -32,6 +32,18 @@ class UpdateRequest extends FormRequest
             'description' => 'nullable|string',
             'publish' => 'sometimes|in:1,2',
             'color' => 'nullable|string|max:7',
+            'parent_id' => [
+                'sometimes',
+                'nullable',
+                'exists:users,id',
+                function ($attribute, $value, $fail) {
+                    $userId = $this->route('user');
+                    $id = $userId instanceof \App\Models\User ? $userId->id : $userId;
+                    if ($value && $id && (int)$value === (int)$id) {
+                        $fail('Không thể chọn chính mình làm người quản lý.');
+                    }
+                }
+            ],
         ];
     }
 

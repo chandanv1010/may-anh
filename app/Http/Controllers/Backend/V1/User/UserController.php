@@ -65,8 +65,10 @@ class UserController extends BaseController{
         $this->authorize('modules', 'user:store');
         
         $userCatalogues = $this->getUserCatalogues();
+        $usersList = $this->userService->setWith([])->paginate(new Request(['type' => 'all', 'sort' => 'name,asc']));
         return Inertia::render('backend/user/user/save', [
-            'userCatalogues' => $userCatalogues
+            'userCatalogues' => $userCatalogues,
+            'usersList' => $usersList
         ]);
     }
 
@@ -80,10 +82,12 @@ class UserController extends BaseController{
         $this->authorize('modules', 'user:update');
         $userCatalogues = $this->getUserCatalogues();
         $record = $this->service->show($id);
+        $usersList = $this->userService->setWith([])->paginate(new Request(['type' => 'all', 'sort' => 'name,asc']));
         
         return Inertia::render('backend/user/user/save', [
             'record' => $record,
-            'userCatalogues' => $userCatalogues
+            'userCatalogues' => $userCatalogues,
+            'usersList' => $usersList
         ]);
     }
 

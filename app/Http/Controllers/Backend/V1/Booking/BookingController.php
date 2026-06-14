@@ -91,10 +91,28 @@ class BookingController extends Controller
         ]);
     }
 
-    public function statistics(): Response
+    public function statistics(Request $request): Response
     {
         $user = Auth::user();
         $isSuperAdmin = $user->isSuperAdmin();
+
+        // 1. Get month filter (default to current month)
+        $monthStr = $request->input('month', Carbon::now()->format('Y-m'));
+        $startOfMonth = Carbon::parse($monthStr . '-01')->startOfMonth();
+        $endOfMonth = Carbon::parse($monthStr . '-01')->endOfMonth();
+
+        // 2. Get user filter (personnel filter)
+        $filterUserId = $request->input('user_id', 'all');
+
+        // Check permissions for non-superadmin
+        if (!$isSuperAdmin) {
+            $subordinateIds = User::where('parent_id', $user->id)->pluck('id')->toArray();
+            $allowedIds = array_merge([$user->id], $subordinateIds);
+
+            if ($filterUserId !== 'all' && !in_array((int)$filterUserId, $allowedIds)) {
+                $filterUserId = 'all';
+            }
+        }
 
         $query = BookingOrder::with([
             'bookings.product',
@@ -102,23 +120,82 @@ class BookingController extends Controller
             'staffGiaoMay',
             'staffGiaoKhach',
             'staffNhan',
-            'staffGiu'
-        ])->orderBy('created_at', 'desc');
+            'staffGiu',
+            'commissions.user'
+        ])
+        ->orderBy('created_at', 'desc');
 
-        // Phân quyền: Nếu không phải Super Admin thì chỉ thấy đơn mình chốt
-        if (!$isSuperAdmin) {
-            $query->where('staff_chot_id', $user->id);
+        // Apply Month filter: check bookings booking_date, or fallback to created_at
+        $query->where(function($q) use ($startOfMonth, $endOfMonth) {
+            $q->whereHas('bookings', function($subQ) use ($startOfMonth, $endOfMonth) {
+                $subQ->whereBetween('booking_date', [$startOfMonth->toDateString(), $endOfMonth->toDateString()]);
+            })->orWhere(function($subQ) use ($startOfMonth, $endOfMonth) {
+                $subQ->whereDoesntHave('bookings')
+                     ->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
+            });
+        });
+
+        // Apply Personnel (User) filter
+        if ($filterUserId !== 'all') {
+            $selectedUser = User::find($filterUserId);
+            if ($selectedUser) {
+                $subordinateIds = User::where('parent_id', $filterUserId)->pluck('id')->toArray();
+                $targetUserIds = array_merge([(int)$filterUserId], $subordinateIds);
+                $query->whereIn('staff_chot_id', $targetUserIds);
+            }
+        } else {
+            // If user is not superadmin, they can only see their own and their subordinates' bookings
+            if (!$isSuperAdmin) {
+                $subordinateIds = User::where('parent_id', $user->id)->pluck('id')->toArray();
+                $targetUserIds = array_merge([$user->id], $subordinateIds);
+                $query->whereIn('staff_chot_id', $targetUserIds);
+            }
         }
 
         $orders = $query->get();
 
+        // 3. Determine the list of filtered users for the columns
+        if ($filterUserId !== 'all') {
+            $selectedUser = User::find($filterUserId);
+            if ($selectedUser) {
+                $subordinateIds = User::where('parent_id', $filterUserId)->pluck('id')->toArray();
+                $targetUserIds = array_merge([(int)$filterUserId], $subordinateIds);
+                $filteredUsers = User::whereIn('id', $targetUserIds)->get();
+            } else {
+                $filteredUsers = collect();
+            }
+        } else {
+            if ($isSuperAdmin) {
+                $filteredUsers = User::orderBy('name', 'asc')->get();
+            } else {
+                // Non-superadmin: Show self and subordinates
+                $subordinateIds = User::where('parent_id', $user->id)->pluck('id')->toArray();
+                $targetUserIds = array_merge([$user->id], $subordinateIds);
+                $filteredUsers = User::whereIn('id', $targetUserIds)->get();
+            }
+        }
+
+        // 4. Fetch members for the personnel filter dropdown
+        if ($isSuperAdmin) {
+            $allowedMembers = User::orderBy('name', 'asc')->get(['id', 'name']);
+        } else {
+            $subordinateIds = User::where('parent_id', $user->id)->pluck('id')->toArray();
+            $allowedIds = array_merge([$user->id], $subordinateIds);
+            $allowedMembers = User::whereIn('id', $allowedIds)->orderBy('name', 'asc')->get(['id', 'name']);
+        }
+
         return Inertia::render('backend/booking/statistics', [
             'orders' => $orders,
-            'users' => User::all(),
+            'users' => $allowedMembers,
+            'filteredUsers' => $filteredUsers,
             'machines' => Product::where('publish', 2)
                 ->orderBy('order', 'asc')
                 ->get(),
             'isSuperAdmin' => $isSuperAdmin,
+            'request' => [
+                'month' => $monthStr,
+                'user_id' => $filterUserId,
+            ]
         ]);
     }
 
