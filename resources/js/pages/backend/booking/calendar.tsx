@@ -221,7 +221,7 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Lịch Máy" />
-            <div className="flex h-full flex-1 flex-col gap-4 p-4 page-wrapper overflow-hidden">
+            <div className="flex h-[calc(100vh-4rem)] flex-1 flex-col gap-4 p-4 page-wrapper overflow-hidden">
                 <CustomPageHeading heading="Lịch Đặt Máy" breadcrumbs={breadcrumbs} />
                 
                 <Card className="flex-1 flex flex-col overflow-hidden bg-white shadow-sm border-none rounded-xl">
@@ -389,7 +389,7 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                         style={{ width: '38px', minWidth: '38px' }}
                                         className={cn(
                                             "sticky top-12 z-20 bg-slate-50 border-r border-b text-[10px] font-bold text-slate-400 h-6",
-                                            isCurrentShift && "border-l-[2px] border-l-blue-600 relative z-20"
+                                            isCurrentShift && "border-l-[2px] border-l-blue-600"
                                         )}
                                     >
                                         {slot}

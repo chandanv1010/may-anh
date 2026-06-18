@@ -348,12 +348,31 @@ export function BookingFormModal({
         let total = 0;
         blocks.forEach(block => {
             const sessions = block.length;
-            if (sessions === 1) total += p6h;
-            else if (sessions === 2) total += p1d;
-            else {
-                const days = sessions / 3;
-                const rate = sessions >= 21 ? (p7d || p3d || p1d) : (sessions >= 9 ? (p3d || p1d) : p1d);
-                total += days * rate;
+            const fullDays = Math.floor(sessions / 3);
+            const remainingSlots = sessions % 3;
+
+            // Số ngày tính tiền:
+            // - Dư 0 buổi: giữ nguyên số ngày
+            // - Dư 1 buổi: giữ nguyên số ngày, cộng thêm p6h
+            // - Dư 2 buổi: cộng thêm 1 ngày (tính thành ngày kế tiếp)
+            const billedDays = remainingSlots === 2 ? fullDays + 1 : fullDays;
+
+            if (billedDays === 0) {
+                // Chỉ 1 buổi duy nhất
+                total += p6h;
+            } else {
+                // Chọn đơn giá theo số ngày tính tiền
+                const rate = billedDays >= 7
+                    ? (p7d || p3d || p1d)
+                    : billedDays >= 3
+                        ? (p3d || p1d)
+                        : p1d;
+                total += billedDays * rate;
+
+                // Nếu dư 1 buổi, cộng thêm giá 6h
+                if (remainingSlots === 1) {
+                    total += p6h;
+                }
             }
         });
         return total;
