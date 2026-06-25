@@ -17,6 +17,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Lịch Máy', href: '#' },
 ];
 
+const getCompactDayName = (day: Date) => {
+    const dayNum = day.getDay();
+    return dayNum === 0 ? 'CN' : `T${dayNum + 1}`;
+};
+
 interface Booking {
     id: number;
     product_id: number;
@@ -221,18 +226,18 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Lịch Máy" />
-            <div className="flex h-[calc(100vh-4rem)] flex-1 flex-col gap-4 p-4 page-wrapper overflow-hidden">
+            <div className="flex h-[calc(100dvh-4rem)] flex-1 flex-col gap-2 p-2 sm:gap-4 sm:p-4 page-wrapper overflow-hidden">
                 <CustomPageHeading heading="Lịch Đặt Máy" breadcrumbs={breadcrumbs} />
                 
                 <Card className="flex-1 flex flex-col overflow-hidden bg-white shadow-sm border-none rounded-xl">
                     {/* Header Controls */}
-                    <div className="p-4 border-b flex items-center justify-between bg-slate-50/50">
+                    <div className="p-3 md:p-4 border-b flex items-center justify-between bg-slate-50/50 card-controls-bar">
                         <div className="flex items-center gap-4">
-                            <div className="flex items-center bg-white border rounded-lg overflow-hidden shadow-sm">
+                            <div className="flex items-center bg-white border rounded-lg overflow-hidden shadow-sm date-picker-container">
                                 <Button variant="ghost" size="icon" onClick={prevPeriod} className="h-9 w-9 rounded-none hover:bg-slate-100">
                                     <ChevronLeft className="h-4 w-4" />
                                 </Button>
-                                <div className="px-4 py-1 text-sm font-medium border-x flex items-center gap-2">
+                                <div className="px-4 py-1 text-sm font-medium border-x flex items-center gap-2 date-display-text">
                                     <CalendarIcon className="h-4 w-4 text-blue-500" />
                                     {format(days[0], 'dd/MM')} - {format(days[days.length - 1], 'dd/MM/yyyy')}
                                 </div>
@@ -240,11 +245,11 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
                                     <ChevronRight className="h-4 w-4" />
                                 </Button>
                             </div>
-                            <Button variant="outline" size="sm" onClick={today} className="bg-white">
+                            <Button variant="outline" size="sm" onClick={today} className="bg-white today-button">
                                 Hôm nay
                             </Button>
                         </div>
-                        <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
+                        <div className="hidden xl:flex items-center gap-4 text-xs font-medium text-slate-500">
                              <div className="flex items-center gap-1.5">
                                 <div className="w-3 h-3 rounded bg-[#4ade80] border border-green-500"></div>
                                 <span>Trống</span>
@@ -314,21 +319,72 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
                     background: #94a3b8;
                 }
+                .mobile-zoom-table {
+                    --slot-width: 38px;
+                }
                 @media (max-width: 768px) {
                     .mobile-zoom-table {
                         zoom: 0.9;
+                        --slot-width: 28px;
+                        width: calc(100px + var(--days-count) * var(--slots-count) * var(--slot-width)) !important;
                     }
                     .machine-col {
-                        width: 120px !important;
-                        min-width: 120px !important;
+                        width: 100px !important;
+                        min-width: 100px !important;
+                        font-size: 12px !important;
+                        padding: 4px 4px !important;
+                    }
+                    /* Increase text size inside the calendar table on mobile by 1px */
+                    .calendar-table th, .calendar-table td {
                         font-size: 11px !important;
-                        padding: 4px 6px !important;
+                    }
+                    .calendar-table th .text-[10px] {
+                        font-size: 11px !important;
+                    }
+                    .calendar-table th .text-sm {
+                        font-size: 13px !important;
+                    }
+                    .calendar-table td span.text-[7px] {
+                        font-size: 8px !important;
                     }
                 }
                 @media (min-width: 769px) {
+                    .mobile-zoom-table {
+                        width: calc(200px + var(--days-count) * var(--slots-count) * var(--slot-width)) !important;
+                    }
                     .machine-col {
                         width: 200px !important;
                         min-width: 200px !important;
+                    }
+                }
+                @media (max-width: 1024px), (max-height: 700px) {
+                    .page-heading {
+                        display: none !important;
+                    }
+                }
+                @media (max-height: 500px) {
+                    .page-wrapper {
+                        padding: 4px !important;
+                        gap: 4px !important;
+                    }
+                    .card-controls-bar {
+                        padding: 4px 8px !important;
+                    }
+                    .date-picker-container {
+                        height: 28px !important;
+                    }
+                    .date-picker-container button {
+                        height: 26px !important;
+                        width: 26px !important;
+                    }
+                    .date-display-text {
+                        padding: 2px 8px !important;
+                        font-size: 11px !important;
+                    }
+                    .today-button {
+                        height: 28px !important;
+                        font-size: 11px !important;
+                        padding: 2px 8px !important;
                     }
                 }
             `}} />
@@ -337,8 +393,6 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
 }
 
 const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, getUserColor, onCellDoubleClick, currentUser, isSuperAdmin }: any) => {
-    const totalMinWidth = 200 + (days.length * slots.length * 38);
-    
     const [now, setNow] = useState(new Date());
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 60000);
@@ -353,13 +407,16 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
     return (
         <table 
             className="calendar-table border-collapse table-fixed border-spacing-0 mobile-zoom-table"
-            style={{ width: 'max-content' }}
+            style={{ 
+                '--days-count': days.length,
+                '--slots-count': slots.length,
+            } as React.CSSProperties}
         >
             <colgroup>
                 <col className="machine-col" />
                 {days.flatMap((_: any, dIdx: number) => 
                     slots.map((_: any, sIdx: number) => (
-                        <col key={`${dIdx}-${sIdx}`} style={{ width: '38px' }} />
+                        <col key={`${dIdx}-${sIdx}`} style={{ width: 'var(--slot-width)' }} />
                     ))
                 )}
             </colgroup>
@@ -373,7 +430,8 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                     {days.map((day: any, idx: number) => (
                         <th key={idx} id={isSameDay(day, now) ? 'today-col' : undefined} colSpan={slots.length} className={`sticky top-0 z-20 border-r border-b p-1 text-center h-12 ${isSameDay(day, now) ? 'bg-blue-50' : 'bg-slate-100'}`}>
                             <div className="text-sm font-bold text-slate-700">{format(day, 'dd', { locale: vi })}</div>
-                            <div className="text-[10px] uppercase text-slate-500">{format(day, 'EEEE', { locale: vi })}</div>
+                            <div className="hidden md:block text-[10px] uppercase text-slate-500">{format(day, 'EEEE', { locale: vi })}</div>
+                            <div className="block md:hidden text-[10px] uppercase font-bold text-slate-500">{getCompactDayName(day)}</div>
                         </th>
                     ))}
                 </tr>
@@ -386,7 +444,7 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                 return (
                                     <th 
                                         key={`${dIdx}-${sIdx}`} 
-                                        style={{ width: '38px', minWidth: '38px' }}
+                                        style={{ width: 'var(--slot-width)', minWidth: 'var(--slot-width)' }}
                                         className={cn(
                                             "sticky top-12 z-20 bg-slate-50 border-r border-b text-[10px] font-bold text-slate-400 h-6",
                                             isCurrentShift && "border-l-[2px] border-l-blue-600"
