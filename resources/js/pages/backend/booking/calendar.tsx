@@ -181,9 +181,12 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
 
     const getUserColor = (userId: number | null) => {
         if (!userId) return '#3b82f6';
+        const user = users.find((u: any) => u.id === userId);
+        if (user?.color) return user.color;
+        // Fallback nếu user chưa được gán màu
         const colors = [
-            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1', 
-            '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4'
+            '#3b82f6', '#f97316', '#10b981', '#6366f1', '#ef4444',
+            '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b', '#06b6d4'
         ];
         return colors[userId % colors.length];
     };
