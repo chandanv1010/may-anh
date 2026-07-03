@@ -219,6 +219,7 @@ export default function UserSave({record, userCatalogues, usersList = []}: UserS
                                                     <CustomDatePicker 
                                                         title="Chọn ngày sinh"
                                                         name="birthday"
+                                                        dateFormat="yyyy-MM-dd"
                                                         defaultValue={record?.birthday}
                                                         onChange={handleEmitterChange}
                                                     />
