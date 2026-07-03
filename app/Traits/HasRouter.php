@@ -42,6 +42,15 @@ trait HasRouter {
             // Chỉ sync router nếu có canonical
             if($canonical){
                 $modelClass = get_class($this->model);
+                $languageId = config('app.language_id');
+
+                // Xóa các router orphan: cùng routerable nhưng module khác
+                // (xảy ra khi module name thay đổi, VD: 'post' → 'posts')
+                \App\Models\Router::where('routerable_id', $this->model->id)
+                    ->where('routerable_type', $modelClass)
+                    ->where('language_id', $languageId)
+                    ->where('module', '!=', $module)
+                    ->delete();
                 
                 $payload = [
                     'routerable_id' => $this->model->id,
@@ -50,14 +59,14 @@ trait HasRouter {
                     'next_component' => $nextComponent,
                     'controller' => $controller,
                     'canonical' => $canonical,
-                    'language_id' => config('app.language_id'),
+                    'language_id' => $languageId,
                 ];
                 
                 \App\Models\Router::updateOrCreate([
                     'routerable_id' => $this->model->id,
                     'routerable_type' => $modelClass,
                     'module' => $module,
-                    'language_id' => config('app.language_id'),
+                    'language_id' => $languageId,
                 ], $payload);
             }
         }
