@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { BreadcrumbItem, Product, User } from '@/types';
 import CustomPageHeading from '@/components/custom-page-heading';
 import { Card } from '@/components/ui/card';
@@ -36,6 +36,8 @@ interface BookingCalendarProps {
     users: User[];
     bookings: Booking[];
     catalogues: any[];
+    isSuperAdmin: boolean;
+    currentUser: User;
 }
 
 
@@ -108,10 +110,7 @@ const BookingInfoPopover = ({ booking, machineName, users }: { booking: any, mac
     );
 };
 
-export default function BookingCalendar({ machines, users, bookings, catalogues }: BookingCalendarProps) {
-    const { auth } = usePage().props as any;
-    const currentUser = auth.user;
-    const isSuperAdmin = currentUser?.id === 1;
+export default function BookingCalendar({ machines, users, bookings, catalogues, isSuperAdmin, currentUser }: BookingCalendarProps) {
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -179,16 +178,12 @@ export default function BookingCalendar({ machines, users, bookings, catalogues 
         return bookings.find(b => b.product_id === machineId && b.booking_date === dateStr && b.slot === slot);
     };
 
-    const getUserColor = (userId: number | null) => {
-        if (!userId) return '#3b82f6';
-        const user = users.find((u: any) => u.id === userId);
-        if (user?.color) return user.color;
-        // Fallback nếu user chưa được gán màu
-        const colors = [
-            '#3b82f6', '#f97316', '#10b981', '#6366f1', '#ef4444',
-            '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b', '#06b6d4'
-        ];
-        return colors[userId % colors.length];
+    // Lấy màu theo staff_chot_id của order (chính xác hơn booking.user_id)
+    const getUserColor = (staffChotId: number | null | undefined) => {
+        if (!staffChotId) return '#94a3b8';
+        const user = users.find((u: any) => u.id === staffChotId);
+        // Dùng đúng màu từ DB, fallback xám nếu chưa set
+        return user?.color || '#94a3b8';
     };
 
     const handleCellDoubleClick = (machineId: number, date: Date, slot: string) => {
@@ -488,8 +483,10 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                             tooltip = `Đã thuê xong - Bởi: ${users.find((u: any) => u.id === booking.user_id)?.name || 'N/A'}`;
                                         } else {
                                             // IF it's a backup machine, the booking color is ALWAYS yellow
-                                            cellColor = machine.is_backup ? '#facc15' : getUserColor(booking.user_id);
-                                            tooltip = `Đặt bởi: ${users.find((u: any) => u.id === booking.user_id)?.name || 'N/A'}`;
+                                            // Dùng staff_chot_id từ order để lấy đúng màu user
+                                            const staffChotId = booking.order?.staff_chot_id ?? booking.user_id;
+                                            cellColor = machine.is_backup ? '#facc15' : getUserColor(staffChotId);
+                                            tooltip = `Đặt bởi: ${users.find((u: any) => u.id === staffChotId)?.name || 'N/A'}`;
                                         }
                                     } else if (isPast) {
                                         cellColor = '#4ade80';
@@ -497,7 +494,10 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                         tooltip = 'Thời gian đã qua (Không có khách thuê)';
                                     }
                                     
-                                    const hasPermission = !booking || isSuperAdmin || (booking?.user_id === currentUser?.id) || (booking?.order?.staff_chot_id === currentUser?.id);
+                                    // Có quyền xem/sửa nếu: superadmin, hoặc là người chốt đơn, hoặc có user_id trên slot khớp
+                                    const hasPermission = !booking || isSuperAdmin 
+                                        || (booking?.order?.staff_chot_id != null && booking?.order?.staff_chot_id === currentUser?.id)
+                                        || (booking?.user_id != null && booking?.user_id === currentUser?.id);
                                     const showPopover = !!(booking && booking.order && hasPermission);
 
                                     const innerBlock = (extraHandlers?: any) => (

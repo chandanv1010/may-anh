@@ -71,7 +71,8 @@ class BookingController extends Controller
         $users = User::all(['id', 'name', 'color']);
 
         // Fetch bookings for a range (e.g., 30 days around today)
-        $bookings = ProductBooking::with(['order.bookings'])->whereBetween('booking_date', [
+        // Load 'order' để có staff_chot_id cho màu sắc và permission check
+        $bookings = ProductBooking::with(['order'])->whereBetween('booking_date', [
             Carbon::today()->subDays(30)->toDateString(),
             Carbon::today()->addDays(30)->toDateString()
         ])->get();
