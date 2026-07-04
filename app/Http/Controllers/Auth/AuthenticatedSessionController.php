@@ -73,7 +73,7 @@ class AuthenticatedSessionController extends Controller
         setcookie('CKFINDER_PERMISSION', $encodedPermissions, $expired, '/');
 
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route('booking.calendar', absolute: false));
     }
 
     /**
