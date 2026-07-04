@@ -41,9 +41,28 @@ interface BookingCalendarProps {
 }
 
 
-const BookingInfoPopover = ({ booking, machineName, users }: { booking: any, machineName: string, users: any[] }) => {
+const BookingInfoPopover = ({ booking, machineName, users, onEdit }: { booking: any, machineName: string, users: any[], onEdit?: () => void }) => {
     const order = booking.order;
-    if (!order) return null;
+
+    // Khi không có order data: hiện fallback để mobile vẫn tap được
+    if (!order) return (
+        <div className="flex flex-col">
+            <div className="bg-[#fde68a] px-3 py-2 border-b border-amber-200">
+                <h4 className="font-bold text-slate-800 text-sm">Đơn hàng</h4>
+            </div>
+            <div className="p-4 text-center space-y-3">
+                <p className="text-slate-500 text-xs">Không tải được thông tin đơn.</p>
+                {onEdit && (
+                    <button
+                        onClick={onEdit}
+                        className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded-lg transition-colors"
+                    >
+                        ✏️ Mở để chỉnh sửa
+                    </button>
+                )}
+            </div>
+        </div>
+    );
 
     const roles = [
         { key: 'staff_chot_id', label: 'Chốt', icon: '💰' },
@@ -507,7 +526,9 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                     const hasPermission = !booking || isSuperAdmin 
                                         || (booking?.order?.staff_chot_id != null && booking?.order?.staff_chot_id === currentUser?.id)
                                         || (booking?.user_id != null && booking?.user_id === currentUser?.id);
-                                    const showPopover = !!(booking && booking.order && hasPermission);
+                                    // showPopover: chỉ cần booking + permission, không cần booking.order
+                                    // → mobile có thể tap 1 lần để xem/sửa (không cần double-tap)
+                                    const showPopover = !!(booking && hasPermission);
 
                                     const innerBlock = (extraHandlers?: any) => (
                                         <div className="relative w-full h-full min-h-[22px]">
@@ -540,7 +561,12 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                                             {innerBlock({ onDoubleClick: () => onCellDoubleClick(machine.id, day, slot) })}
                                                         </PopoverTrigger>
                                                         <PopoverContent className="w-72 p-0 shadow-2xl border border-amber-200 rounded-xl bg-[#fffbeb] overflow-hidden" side="top" align="center">
-                                                            <BookingInfoPopover booking={booking} machineName={machine.name} users={users} />
+                                                            <BookingInfoPopover
+                                                                booking={booking}
+                                                                machineName={machine.name}
+                                                                users={users}
+                                                                onEdit={() => onCellDoubleClick(machine.id, day, slot)}
+                                                            />
                                                         </PopoverContent>
                                                     </Popover>
                                                 </td>
