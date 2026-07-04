@@ -24,8 +24,23 @@ class DashboardController extends BaseController
     public function index(): Response
     {
         $user = auth()->user();
-        if (!$user->isSuperAdmin()) {
-            abort(403, 'Chỉ Super Admin mới được xem Dashboard');
+        $isSuperAdmin = $user->isSuperAdmin();
+
+        // Nếu không phải superadmin, trả về dashboard trống
+        if (!$isSuperAdmin) {
+            return Inertia::render('backend/dashboard', [
+                'isSuperAdmin'       => false,
+                'revenueByDate'      => [],
+                'machinePerformance' => [],
+                'staffPerformance'   => [],
+                'machineDistribution'=> [],
+                'monthlyMachineStats'=> [],
+                'stats' => [
+                    'total_revenue'   => 0,
+                    'total_orders'    => 0,
+                    'active_machines' => 0,
+                ],
+            ]);
         }
 
         // 1. Lấy tất cả đơn hàng (không tính bảo trì) kèm theo bookings và nhân viên chốt
@@ -149,14 +164,15 @@ class DashboardController extends BaseController
             });
 
         return Inertia::render('backend/dashboard', [
-            'revenueByDate' => $revenueByDate,
-            'machinePerformance' => $machines,
-            'staffPerformance' => $staffPerformance,
+            'isSuperAdmin'        => true,
+            'revenueByDate'       => $revenueByDate,
+            'machinePerformance'  => $machines,
+            'staffPerformance'    => $staffPerformance,
             'machineDistribution' => $machineDistribution,
             'monthlyMachineStats' => $monthlyMachineStats,
             'stats' => [
-                'total_revenue' => (float)collect($revenueByDateMap)->sum(),
-                'total_orders' => \App\Models\BookingOrder::where('status', '!=', 'maintenance')->count(),
+                'total_revenue'   => (float)collect($revenueByDateMap)->sum(),
+                'total_orders'    => \App\Models\BookingOrder::where('status', '!=', 'maintenance')->count(),
                 'active_machines' => \App\Models\Product::where('publish', 2)->count(),
             ]
         ]);

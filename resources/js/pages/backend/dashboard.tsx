@@ -12,6 +12,7 @@ import { useState, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DashboardProps {
+    isSuperAdmin: boolean;
     revenueByDate: Array<{ date: string, total: number }>;
     machinePerformance: Array<{
         id: number;
@@ -57,6 +58,7 @@ const formatCurrency = (value: number) => {
 };
 
 export default function Dashboard({ 
+    isSuperAdmin,
     revenueByDate, 
     machinePerformance, 
     staffPerformance, 
@@ -73,6 +75,23 @@ export default function Dashboard({
     const activeMachineName = useMemo(() => {
         return monthlyMachineStats.find(m => m.id === selectedMachineId)?.name || 'N/A';
     }, [selectedMachineId, monthlyMachineStats]);
+
+    // Non-superadmin: hiển thị dashboard trống
+    if (!isSuperAdmin) {
+        return (
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title="Dashboard" />
+                <div className="flex h-full flex-1 flex-col items-center justify-center gap-4 p-6 bg-slate-50/50">
+                    <div className="text-slate-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <p className="text-slate-400 text-sm">Bạn không có quyền xem thống kê Dashboard.</p>
+                </div>
+            </AppLayout>
+        );
+    }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
