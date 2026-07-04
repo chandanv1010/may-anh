@@ -257,6 +257,10 @@ export default function BookingCalendar({ machines, users, bookings, catalogues,
                                 <span>Đặt máy dự phòng</span>
                             </div>
                             <div className="flex items-center gap-1.5">
+                                <div className="w-3 h-3 rounded bg-[#ef4444] border border-red-600"></div>
+                                <span>Đang thuê</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
                                 <div className="w-3 h-3 rounded bg-[#15803d] border border-green-800"></div>
                                 <span>Đã thuê xong</span>
                             </div>
@@ -477,6 +481,11 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                             cellColor = '#ffffff';
                                             isClickable = true;
                                             tooltip = 'Bảo trì';
+                                        } else if (booking.status === 'renting') {
+                                            // Đang thuê → đỏ, không phụ thuộc màu user
+                                            cellColor = '#ef4444';
+                                            const staffChotId = booking.order?.staff_chot_id ?? booking.user_id;
+                                            tooltip = `Đang thuê - Bởi: ${users.find((u: any) => u.id === staffChotId)?.name || 'N/A'}`;
                                         } else if (isPast || booking.status === 'finished') {
                                             cellColor = '#15803d';
                                             isClickable = false;
