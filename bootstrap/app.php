@@ -32,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        $middleware->redirectUsersTo(fn (Request $request) => '/dashboard');
+        $middleware->redirectUsersTo(fn (Request $request) => '/backend/booking/calendar');
 
         $middleware->redirectGuestsTo(fn (Request $request) => route('login'));
     })

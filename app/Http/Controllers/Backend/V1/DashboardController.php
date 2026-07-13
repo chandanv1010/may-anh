@@ -43,8 +43,8 @@ class DashboardController extends BaseController
             ]);
         }
 
-        // 1. Lấy tất cả đơn hàng (không tính bảo trì) kèm theo bookings và nhân viên chốt
-        $orders = \App\Models\BookingOrder::where('status', '!=', 'maintenance')
+        // 1. Lấy tất cả đơn hàng (không tính bảo trì, không tính đơn hủy) kèm theo bookings và nhân viên chốt
+        $orders = \App\Models\BookingOrder::whereNotIn('status', ['maintenance', 'cancelled'])
             ->with(['bookings', 'staffChot'])
             ->get();
 
@@ -123,7 +123,7 @@ class DashboardController extends BaseController
         
         $machineDistribution = \App\Models\ProductBooking::whereMonth('booking_date', $currentMonth)
             ->whereYear('booking_date', $currentYear)
-            ->where('status', '!=', 'maintenance')
+            ->whereNotIn('status', ['maintenance', 'cancelled'])
             ->selectRaw('product_id, COUNT(*) as count')
             ->groupBy('product_id')
             ->get()
@@ -139,6 +139,7 @@ class DashboardController extends BaseController
         // 4. Thống kê thuê theo tháng của từng máy (12 tháng năm nay)
         $bookingStats = \App\Models\ProductBooking::query()
             ->whereYear('booking_date', now()->year)
+            ->whereNotIn('status', ['maintenance', 'cancelled'])
             ->selectRaw('product_id, MONTH(booking_date) as month, COUNT(*) as count')
             ->groupBy('product_id', 'month')
             ->get()
@@ -172,7 +173,7 @@ class DashboardController extends BaseController
             'monthlyMachineStats' => $monthlyMachineStats,
             'stats' => [
                 'total_revenue'   => (float)collect($revenueByDateMap)->sum(),
-                'total_orders'    => \App\Models\BookingOrder::where('status', '!=', 'maintenance')->count(),
+                'total_orders'    => \App\Models\BookingOrder::whereNotIn('status', ['maintenance', 'cancelled'])->count(),
                 'active_machines' => \App\Models\Product::where('publish', 2)->count(),
             ]
         ]);

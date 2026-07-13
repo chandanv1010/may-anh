@@ -406,6 +406,7 @@ export function BookingFormModal({
                 const conflicts = (bookings || []).filter(b => {
                     if (b.product_id !== selectedMachineId) return false;
                     if (editingOrderId && b.booking_order_id === editingOrderId) return false;
+                    if (b.status === 'cancelled' || b.status === 'canceled') return false;
                     const bVal = getSlotValue(b.booking_date, b.slot);
                     return bVal >= pStart && bVal <= pEnd;
                 });

@@ -194,7 +194,7 @@ export default function BookingCalendar({ machines, users, bookings, catalogues,
 
     const findBooking = (machineId: number, date: Date, slot: string) => {
         const dateStr = format(date, 'yyyy-MM-dd');
-        return bookings.find(b => b.product_id === machineId && b.booking_date === dateStr && b.slot === slot);
+        return bookings.find(b => b.product_id === machineId && b.booking_date === dateStr && b.slot === slot && b.status !== 'cancelled' && b.status !== 'canceled');
     };
 
     // Lấy màu theo staff_chot_id của order (chính xác hơn booking.user_id)

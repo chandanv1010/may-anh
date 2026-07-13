@@ -166,7 +166,7 @@ const Statistics = ({ orders, users, filteredUsers = [], machines, isSuperAdmin,
     }, [filteredOrders]);
 
     const metrics = useMemo(() => {
-        const realOrders = filteredOrders.filter(o => o.status !== 'maintenance' && o.customer_name !== 'BẢO TRÌ');
+        const realOrders = filteredOrders.filter(o => o.status !== 'maintenance' && o.customer_name !== 'BẢO TRÌ' && o.status !== 'cancelled' && o.status !== 'canceled');
 
         let totalPeriod = 0;
         let totalFull = 0;
@@ -252,7 +252,7 @@ const Statistics = ({ orders, users, filteredUsers = [], machines, isSuperAdmin,
     // Calculate Grand Totals for displayed orders
     const totalRentPrice = useMemo(() => {
         return filteredOrders.reduce((sum, order) => {
-            if (order.status === 'maintenance' || order.customer_name === 'BẢO TRÌ') return sum;
+            if (order.status === 'maintenance' || order.customer_name === 'BẢO TRÌ' || order.status === 'cancelled' || order.status === 'canceled') return sum;
             return sum + Number(order.final_amount || 0);
         }, 0);
     }, [filteredOrders]);
@@ -428,7 +428,7 @@ const Statistics = ({ orders, users, filteredUsers = [], machines, isSuperAdmin,
                                 {groupedOrders.length > 0 ? groupedOrders.map(([date, items], gIdx) => {
                                     // Calculate group totals
                                     const groupTotalRent = items.reduce((sum, order) => {
-                                        if (order.status === 'maintenance' || order.customer_name === 'BẢO TRÌ') return sum;
+                                        if (order.status === 'maintenance' || order.customer_name === 'BẢO TRÌ' || order.status === 'cancelled' || order.status === 'canceled') return sum;
                                         return sum + Number(order.final_amount || 0);
                                     }, 0);
 

@@ -9,9 +9,9 @@ use App\Models\Product;
 
 use App\Http\Controllers\Frontend\HomeController;
 
-// Redirect / to backend dashboard (will redirect to login if not authenticated)
+// Redirect / to backend booking calendar (will redirect to login if not authenticated)
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    return redirect()->route('booking.calendar');
 })->name('home');
 
 // Public thumbnail endpoint for CKFinder/userfiles images

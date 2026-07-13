@@ -300,6 +300,7 @@ class BookingController extends Controller
                             $exists = ProductBooking::where('product_id', $data['product_id'])
                                 ->where('booking_date', $currentDate->toDateString())
                                 ->where('slot', $slot)
+                                ->where('status', '!=', 'cancelled')
                                 ->exists();
                             
                             if ($exists) {
@@ -402,6 +403,30 @@ class BookingController extends Controller
             // Sync slots: If status was pending, we allow full sync.
             // If already renting/finished, we only update status of existing slots.
             if ($order->getOriginal('status') === 'pending') {
+                // Check for Overlaps (excluding current order's slots and cancelled bookings)
+                foreach ($data['rental_periods'] as $period) {
+                    $currentDate = Carbon::parse($period['startDate']);
+                    $endDate = Carbon::parse($period['endDate']);
+                    
+                    while ($currentDate->lte($endDate)) {
+                        foreach (['S', 'C', 'T'] as $slot) {
+                            if ($this->isSlotInRange($currentDate, $slot, $period)) {
+                                $exists = ProductBooking::where('product_id', $data['product_id'])
+                                    ->where('booking_date', $currentDate->toDateString())
+                                    ->where('slot', $slot)
+                                    ->where('booking_order_id', '!=', $order->id)
+                                    ->where('status', '!=', 'cancelled')
+                                    ->exists();
+                                
+                                if ($exists) {
+                                    throw new \Exception("Máy đã có người đặt vào ngày {$currentDate->toDateString()} buổi {$slot}. Vui lòng kiểm tra lại!");
+                                }
+                            }
+                        }
+                        $currentDate->addDay();
+                    }
+                }
+
                 $order->bookings()->delete();
                 $this->createSlots($order, $data);
             } else {
