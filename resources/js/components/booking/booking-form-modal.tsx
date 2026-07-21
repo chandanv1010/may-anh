@@ -273,6 +273,7 @@ export function BookingFormModal({
     const handleCustomerSearch = async (query: string) => {
         setCustomerSearch(query);
         setCustomerData({ ...customerData, name: query });
+        setSelectedCustomer(null);
         if (query.length >= 1) {
             setIsSearching(true);
             try {
