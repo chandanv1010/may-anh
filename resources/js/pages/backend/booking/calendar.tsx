@@ -554,16 +554,16 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                     ))
                 )}
             </colgroup>
-            <thead className="sticky top-0 z-20 bg-slate-100 shadow-sm">
+            <thead className="sticky top-0 z-40 bg-slate-100 shadow-sm">
                 <tr>
                     <th 
                         rowSpan={2}
-                        className="sticky top-0 left-0 z-30 bg-slate-100 border-r border-b p-2 text-xs font-bold text-slate-600 shadow-[2px_0_5px_rgba(0,0,0,0.05)] machine-col"
+                        className="sticky top-0 left-0 z-50 bg-slate-100 border-r border-b p-2 text-xs font-bold text-slate-600 shadow-[2px_0_5px_rgba(0,0,0,0.05)] machine-col"
                     >
                         Ngày<br/>Tên máy / Buổi
                     </th>
                     {days.map((day: any, idx: number) => (
-                        <th key={idx} id={isSameDay(day, now) ? 'today-col' : undefined} colSpan={slots.length} className={`sticky top-0 z-20 border-r border-b p-1 text-center h-12 ${isSameDay(day, now) ? 'bg-blue-50' : 'bg-slate-100'}`}>
+                        <th key={idx} id={isSameDay(day, now) ? 'today-col' : undefined} colSpan={slots.length} className={`sticky top-0 z-30 border-r border-b p-1 text-center h-12 ${isSameDay(day, now) ? 'bg-blue-50' : 'bg-slate-100'}`}>
                             <div className="text-sm font-bold text-slate-700">{format(day, 'dd', { locale: vi })}</div>
                             <div className="hidden md:block text-[10px] uppercase text-slate-500">{format(day, 'EEEE', { locale: vi })}</div>
                             <div className="block md:hidden text-[10px] uppercase font-bold text-slate-500">{getCompactDayName(day)}</div>
@@ -580,7 +580,7 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                         key={`${dIdx}-${sIdx}`} 
                                         style={{ width: 'var(--slot-width)', minWidth: 'var(--slot-width)' }}
                                         className={cn(
-                                            "sticky top-12 z-20 bg-slate-50 border-r border-b text-[10px] font-bold text-slate-400 h-6",
+                                            "sticky top-12 z-30 bg-slate-50 border-r border-b text-[10px] font-bold text-slate-400 h-6",
                                             isCurrentShift && "border-l-[2px] border-l-blue-600"
                                         )}
                                     >
