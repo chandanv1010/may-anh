@@ -11,6 +11,9 @@ import { vi } from 'date-fns/locale';
 import { cn } from "@/lib/utils"
 import { BookingFormModal } from '@/components/booking/booking-form-modal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DateRange } from 'react-day-picker';
+import { toast } from 'sonner';
+import { Calendar } from '@/components/ui/calendar';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/backend/dashboard' },
@@ -136,6 +139,23 @@ export default function BookingCalendar({ machines, users, bookings, catalogues,
     const [selectedSlot, setSelectedSlot] = useState<{ machineId: number, date: string, slot: string } | null>(null);
     const [editingOrder, setEditingOrder] = useState<any>(null);
     
+    // Custom range state
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    const [customRange, setCustomRange] = useState<DateRange | undefined>(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const startStr = urlParams.get('start_date');
+        const endStr = urlParams.get('end_date');
+        if (startStr && endStr) {
+            const [sY, sM, sD] = startStr.split('-').map(Number);
+            const [eY, eM, eD] = endStr.split('-').map(Number);
+            return {
+                from: new Date(sY, sM - 1, sD),
+                to: new Date(eY, eM - 1, eD)
+            };
+        }
+        return undefined;
+    });
+
     // Filtering State
     const [selectedCatalogues, setSelectedCatalogues] = useState<number[]>([]);
 
@@ -170,13 +190,91 @@ export default function BookingCalendar({ machines, users, bookings, catalogues,
 
     const slots = ['S', 'C', 'T'];
     const days = useMemo(() => {
+        if (customRange?.from && customRange?.to) {
+            const start = customRange.from;
+            const end = customRange.to;
+            return eachDayOfInterval({ start, end });
+        }
         const start = startOfWeek(currentDate, { locale: vi });
         return eachDayOfInterval({ start, end: addDays(start, 13) });
-    }, [currentDate]);
+    }, [currentDate, customRange]);
 
-    const prevPeriod = () => setCurrentDate(prev => addDays(prev, -14));
-    const nextPeriod = () => setCurrentDate(prev => addDays(prev, 14));
-    const today = () => setCurrentDate(new Date());
+    const handleDateRangeChange = (range: DateRange | undefined) => {
+        if (range?.from && range?.to) {
+            const diffTime = Math.abs(range.to.getTime() - range.from.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            if (diffDays > 10) {
+                toast.error("Khoảng ngày chọn không được vượt quá 10 ngày");
+                return;
+            }
+            setCustomRange(range);
+            setIsCalendarOpen(false);
+
+            const startStr = format(range.from, 'yyyy-MM-dd');
+            const endStr = format(range.to, 'yyyy-MM-dd');
+            router.get(
+                '/backend/booking/calendar',
+                { start_date: startStr, end_date: endStr },
+                { preserveState: true }
+            );
+        } else {
+            setCustomRange(range);
+            if (!range) {
+                setIsCalendarOpen(false);
+                router.get(
+                    '/backend/booking/calendar',
+                    {},
+                    { preserveState: true }
+                );
+            }
+        }
+    };
+
+    const prevPeriod = () => {
+        if (customRange?.from && customRange?.to) {
+            const diffTime = Math.abs(customRange.to.getTime() - customRange.from.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            const newFrom = addDays(customRange.from, -diffDays);
+            const newTo = addDays(customRange.to, -diffDays);
+            const newRange = { from: newFrom, to: newTo };
+            setCustomRange(newRange);
+            router.get(
+                '/backend/booking/calendar',
+                { start_date: format(newFrom, 'yyyy-MM-dd'), end_date: format(newTo, 'yyyy-MM-dd') },
+                { preserveState: true }
+            );
+        } else {
+            setCurrentDate(prev => addDays(prev, -14));
+        }
+    };
+
+    const nextPeriod = () => {
+        if (customRange?.from && customRange?.to) {
+            const diffTime = Math.abs(customRange.to.getTime() - customRange.from.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            const newFrom = addDays(customRange.from, diffDays);
+            const newTo = addDays(customRange.to, diffDays);
+            const newRange = { from: newFrom, to: newTo };
+            setCustomRange(newRange);
+            router.get(
+                '/backend/booking/calendar',
+                { start_date: format(newFrom, 'yyyy-MM-dd'), end_date: format(newTo, 'yyyy-MM-dd') },
+                { preserveState: true }
+            );
+        } else {
+            setCurrentDate(prev => addDays(prev, 14));
+        }
+    };
+
+    const today = () => {
+        setCurrentDate(new Date());
+        setCustomRange(undefined);
+        router.get(
+            '/backend/booking/calendar',
+            {},
+            { preserveState: true }
+        );
+    };
 
     // Scroll to today column when days change
     useEffect(() => {
@@ -254,10 +352,25 @@ export default function BookingCalendar({ machines, users, bookings, catalogues,
                                 <Button variant="ghost" size="icon" onClick={prevPeriod} className="h-9 w-9 rounded-none hover:bg-slate-100">
                                     <ChevronLeft className="h-4 w-4" />
                                 </Button>
-                                <div className="px-4 py-1 text-sm font-medium border-x flex items-center gap-2 date-display-text">
-                                    <CalendarIcon className="h-4 w-4 text-blue-500" />
-                                    {format(days[0], 'dd/MM')} - {format(days[days.length - 1], 'dd/MM/yyyy')}
-                                </div>
+                                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                                    <PopoverTrigger asChild>
+                                        <button className="px-4 py-1 text-sm font-medium border-x flex items-center gap-2 date-display-text hover:bg-slate-50 cursor-pointer h-9 outline-none bg-transparent">
+                                            <CalendarIcon className="h-4 w-4 text-blue-500" />
+                                            {format(days[0], 'dd/MM')} - {format(days[days.length - 1], 'dd/MM/yyyy')}
+                                        </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="center">
+                                        <Calendar
+                                            initialFocus
+                                            mode="range"
+                                            defaultMonth={customRange?.from || currentDate}
+                                            selected={customRange}
+                                            onSelect={handleDateRangeChange}
+                                            numberOfMonths={1}
+                                            locale={vi}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                                 <Button variant="ghost" size="icon" onClick={nextPeriod} className="h-9 w-9 rounded-none hover:bg-slate-100">
                                     <ChevronRight className="h-4 w-4" />
                                 </Button>
@@ -444,7 +557,8 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
             <thead className="sticky top-0 z-20 bg-slate-100 shadow-sm">
                 <tr>
                     <th 
-                        className="sticky top-0 left-0 z-30 bg-slate-100 border-r border-b p-2 text-xs font-bold text-slate-600 h-12 shadow-[2px_0_5px_rgba(0,0,0,0.05)] machine-col"
+                        rowSpan={2}
+                        className="sticky top-0 left-0 z-30 bg-slate-100 border-r border-b p-2 text-xs font-bold text-slate-600 shadow-[2px_0_5px_rgba(0,0,0,0.05)] machine-col"
                     >
                         Ngày<br/>Tên máy / Buổi
                     </th>
@@ -457,7 +571,6 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                     ))}
                 </tr>
                 <tr className="bg-slate-50">
-                    <th className="sticky top-12 left-0 z-30 bg-slate-50 border-r border-b shadow-[2px_0_5px_rgba(0,0,0,0.05)] h-6 machine-col"></th>
                     {days.map((day: any, dIdx: number) => (
                         <React.Fragment key={dIdx}>
                             {slots.map((slot: any, sIdx: number) => {
@@ -482,8 +595,8 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
             <tbody>
                 {machines.length > 0 ? machines.map((machine: any, mIdx: number) => (
                     <tr key={mIdx} className="hover:bg-slate-50 transition-colors">
-                        <td className="sticky left-0 z-10 bg-white border-r border-b p-2 text-xs font-medium text-slate-700 shadow-[2px_0_5px_rgba(0,0,0,0.03)] truncate machine-col">
-                            {machine.name || 'Sản phẩm ' + (mIdx + 1)}
+                        <td className="sticky left-0 z-20 bg-white border-r border-b p-2 text-xs font-medium text-slate-700 shadow-[2px_0_5px_rgba(0,0,0,0.03)] truncate machine-col">
+                            {mIdx + 1}. {machine.name || 'Sản phẩm ' + (mIdx + 1)}
                         </td>
                         {days.map((day: any, dIdx: number) => (
                             <React.Fragment key={dIdx}>

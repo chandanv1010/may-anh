@@ -70,12 +70,22 @@ class BookingController extends Controller
         // Fetch all users to know their colors
         $users = User::all(['id', 'name', 'color']);
 
-        // Fetch bookings for a range (e.g., 30 days around today)
+        // Fetch bookings for a range
         // Load 'order.bookings' để modal có thể lấy thời gian thuê khi edit đơn
-        $bookings = ProductBooking::with(['order.bookings'])->whereBetween('booking_date', [
-            Carbon::today()->subDays(30)->toDateString(),
-            Carbon::today()->addDays(30)->toDateString()
-        ])->get();
+        $startDate = request()->input('start_date');
+        $endDate = request()->input('end_date');
+
+        if ($startDate && $endDate) {
+            $bookings = ProductBooking::with(['order.bookings'])->whereBetween('booking_date', [
+                Carbon::parse($startDate)->subDays(15)->toDateString(),
+                Carbon::parse($endDate)->addDays(15)->toDateString()
+            ])->get();
+        } else {
+            $bookings = ProductBooking::with(['order.bookings'])->whereBetween('booking_date', [
+                Carbon::today()->subDays(30)->toDateString(),
+                Carbon::today()->addDays(30)->toDateString()
+            ])->get();
+        }
 
         // Fetch product catalogues for filtering
         $catalogues = \App\Models\ProductCatalogue::where('publish', 2)
