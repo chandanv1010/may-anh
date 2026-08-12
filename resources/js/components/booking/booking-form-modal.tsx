@@ -348,18 +348,35 @@ export function BookingFormModal({
         if (currentBlock.length > 0) blocks.push(currentBlock);
         let total = 0;
         blocks.forEach(block => {
-            const sessions = block.length;
-            const fullDays = Math.floor(sessions / 3);
-            const remainingSlots = sessions % 3;
+            // Quy tắc tính tiền (theo bảng công thức của cửa hàng):
+            //   - Ngày dùng 2 hoặc 3 ca  -> 1 ngày   (dùng đủ S+C+T vẫn chỉ 1 ngày)
+            //   - Ngày dùng đúng 1 ca    -> 1 buổi
+            //   - 2 buổi lẻ ghép lại     -> 1 ngày
+            // Nói cách khác: một ngày dương lịch không bao giờ bị tính quá 1 ngày tiền.
+            //
+            // Cách cũ lấy Math.floor(tổng số ca / 3) trên cả kỳ thuê, nên ca lẻ của ngày
+            // đầu và ngày cuối bị gộp chung thành "ngày" ảo. Ví dụ Chiều 12 -> Chiều 13:
+            // 4 ca (C,T ngày 12 + S,C ngày 13) ra "1 ngày + 1 buổi" trong khi đúng phải là
+            // 2 ngày, vì mỗi ngày đều đã dùng 2 ca.
+            const soCaMoiNgay = new Map<number, number>();
+            block.forEach(slotValue => {
+                const ngay = Math.floor(slotValue / 3);
+                soCaMoiNgay.set(ngay, (soCaMoiNgay.get(ngay) ?? 0) + 1);
+            });
 
-            // Số ngày tính tiền:
-            // - Dư 0 buổi: giữ nguyên số ngày
-            // - Dư 1 buổi: giữ nguyên số ngày, cộng thêm p6h
-            // - Dư 2 buổi: cộng thêm 1 ngày (tính thành ngày kế tiếp)
-            const billedDays = remainingSlots === 2 ? fullDays + 1 : fullDays;
+            let billedDays = 0;
+            let buoiLe = 0;
+            soCaMoiNgay.forEach(soCa => {
+                if (soCa >= 2) billedDays++;
+                else buoiLe++;
+            });
+
+            // Một khối liền mạch chỉ có thể lẻ ở ngày đầu và ngày cuối, nên buoiLe <= 2.
+            billedDays += Math.floor(buoiLe / 2);
+            const buoiConLai = buoiLe % 2;
 
             if (billedDays === 0) {
-                // Chỉ 1 buổi duy nhất
+                // Cả khối chỉ có 1 ca duy nhất
                 total += p6h;
             } else {
                 // Chọn đơn giá theo số ngày tính tiền
@@ -370,8 +387,8 @@ export function BookingFormModal({
                         : p1d;
                 total += billedDays * rate;
 
-                // Nếu dư 1 buổi, cộng thêm giá 6h
-                if (remainingSlots === 1) {
+                // Còn 1 buổi lẻ chưa ghép được thì cộng thêm giá 6h
+                if (buoiConLai) {
                     total += p6h;
                 }
             }
