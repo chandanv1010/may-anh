@@ -29,12 +29,15 @@ Route::middleware(['auth', 'verified', 'setBackendLocale'])->prefix('backend/cas
     Route::prefix('reason')->name('reason.')->group(function () {
         Route::get('/', [CashReasonController::class, 'index'])->name('index');
         Route::get('/create', [CashReasonController::class, 'create'])->name('create');
+        // /dropdown phai dat TRUOC /{id}. Laravel khop route theo thu tu khai bao, nen
+        // neu de sau thi /{id} an truoc va chuoi "dropdown" bi truyen vao show(int $id)
+        // -> loi 500 "Argument #1 ($id) must be of type int, string given".
+        Route::get('/dropdown', [CashReasonController::class, 'dropdown'])->name('dropdown');
+        Route::post('/bulk-update', [CashReasonController::class, 'bulkUpdate'])->name('bulk-update');
         Route::post('/', [CashReasonController::class, 'store'])->name('store');
         Route::get('/{id}', [CashReasonController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [CashReasonController::class, 'edit'])->name('edit');
         Route::put('/{id}', [CashReasonController::class, 'update'])->name('update');
         Route::delete('/{id}', [CashReasonController::class, 'destroy'])->name('destroy');
-        Route::post('/bulk-update', [CashReasonController::class, 'bulkUpdate'])->name('bulk-update');
-        Route::get('/dropdown', [CashReasonController::class, 'dropdown'])->name('dropdown');
     });
 });

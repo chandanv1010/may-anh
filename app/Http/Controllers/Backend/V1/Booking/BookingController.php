@@ -125,16 +125,26 @@ class BookingController extends Controller
             }
         }
 
-        $query = BookingOrder::with([
-            'bookings.product',
-            'staffChot',
-            'staffGiaoMay',
-            'staffGiaoKhach',
-            'staffNhan',
-            'staffGiu',
-            'commissions.user'
-        ])
-        ->orderBy('created_at', 'desc');
+        // Chi lay dung nhung cot trang thong ke dung den.
+        //
+        // Truoc day nap 'bookings.product' + 5 quan he staff + 'commissions.user' o dang
+        // day du. Model User co $appends=['permissions'] va tu nap 'user_catalogues', nen
+        // MOI bang ten nhan vien keo theo ~55KB; con Product co accessor 'name' keo theo
+        // toan bo quan he ngon ngu. Ket qua: 115 don thanh 16MB JSON, RAM dinh 104MB ->
+        // vuot memory_limit 128M va trang bao loi 500.
+        //
+        // 'commissions.user' bi bo hoan toan: trang chi doc c.user_id va c.commission_amount.
+        $query = BookingOrder::query()
+            ->with([
+                'bookings:id,booking_order_id,product_id,booking_date,slot',
+                'staffChot:id,name,color',
+                'staffGiaoMay:id,name,color',
+                'staffGiaoKhach:id,name,color',
+                'staffNhan:id,name,color',
+                'staffGiu:id,name,color',
+                'commissions:id,booking_order_id,user_id,commission_amount',
+            ])
+            ->orderBy('created_at', 'desc');
 
         // Apply Month filter: check bookings booking_date, or fallback to created_at
         $query->where(function($q) use ($startOfMonth, $endOfMonth) {
@@ -195,13 +205,54 @@ class BookingController extends Controller
             $allowedMembers = User::whereIn('id', $allowedIds)->orderBy('name', 'asc')->get(['id', 'name']);
         }
 
+        // Ten may: lay thang tu bang dich, khong di qua accessor Product::name. Accessor do
+        // nap quan he current_languages voi ca description + content, moi may vai chuc KB.
+        $tenMay = DB::table('product_language')
+            ->where('language_id', config('app.language_id'))
+            ->whereIn('product_id', $orders->pluck('bookings.*.product_id')->flatten()->filter()->unique())
+            ->pluck('name', 'product_id');
+
+        $nhanVien = fn ($nv) => $nv === null ? null : [
+            'id' => $nv->id,
+            'name' => $nv->name,
+            'color' => $nv->color,
+        ];
+
         return Inertia::render('backend/booking/statistics', [
-            'orders' => $orders,
+            // Dung mang phang thay vi model: chi nhung field statistics.tsx doc den. Truoc
+            // day tra ve model day du nen payload len 16MB va trang bao loi 500.
+            'orders' => $orders->map(fn ($don) => [
+                'id' => $don->id,
+                'customer_name' => $don->customer_name,
+                'customer_phone' => $don->customer_phone,
+                'status' => $don->status,
+                'notes' => $don->notes,
+                'deposit_info' => $don->deposit_info,
+                'final_amount' => $don->final_amount,
+                'created_at' => optional($don->created_at)->toDateTimeString(),
+                'bookings' => $don->bookings->map(fn ($ca) => [
+                    'id' => $ca->id,
+                    'booking_date' => $ca->booking_date,
+                    'slot' => $ca->slot,
+                    'product' => ['name' => $tenMay[$ca->product_id] ?? null],
+                ])->values(),
+                'staff_chot' => $nhanVien($don->staffChot),
+                'staff_giao_may' => $nhanVien($don->staffGiaoMay),
+                'staff_giao_khach' => $nhanVien($don->staffGiaoKhach),
+                'staff_nhan' => $nhanVien($don->staffNhan),
+                'staff_giu' => $nhanVien($don->staffGiu),
+                'commissions' => $don->commissions->map(fn ($hh) => [
+                    'user_id' => $hh->user_id,
+                    'commission_amount' => $hh->commission_amount,
+                ])->values(),
+            ])->values(),
             'users' => $allowedMembers,
-            'filteredUsers' => $filteredUsers,
-            'machines' => Product::where('publish', 2)
-                ->orderBy('order', 'asc')
-                ->get(),
+            // filteredUsers chi dung u.id va u.name -> khong tra ve ca ban ghi User.
+            'filteredUsers' => $filteredUsers->map(fn ($nv) => [
+                'id' => $nv->id,
+                'name' => $nv->name,
+            ])->values(),
+            // Bo 'machines': statistics.tsx co destructure nhung khong dung o bat cu dau.
             'isSuperAdmin' => $isSuperAdmin,
             'request' => [
                 'month' => $monthStr,

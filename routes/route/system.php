@@ -7,7 +7,12 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth', 'verified', 'setBackendLocale'])->prefix('backend')->name('backend.')->group(function () {
     
     // System Catalogue Management
-    Route::resource('system/catalogue', SystemCatalogueController::class)->except(['show']);
+    // SystemCatalogueController chi co index/store/update/destroy. except(['show']) van
+    // dang ky create va edit -> /backend/system/catalogue/create loi 500. Trang React
+    // cung chi co index.tsx, viec them/sua lam ngay trong modal cua trang index.
+    Route::resource('system/catalogue', SystemCatalogueController::class)
+        ->only(['index', 'store', 'update', 'destroy'])
+        ->whereNumber('catalogue');
     Route::patch('system/catalogue', [SystemCatalogueController::class, 'bulkUpdate'])->name('system.catalogue.bulkUpdate');
     Route::patch('system/catalogue/{id}/toggle/{field}', [SystemCatalogueController::class, 'toggle'])->name('system.catalogue.toggle');
     

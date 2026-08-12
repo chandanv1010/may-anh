@@ -42,7 +42,6 @@ interface StatisticsProps {
     orders: any[];
     users: any[];
     filteredUsers: any[];
-    machines: any[];
     isSuperAdmin: boolean;
     request: {
         month: string;
@@ -50,7 +49,9 @@ interface StatisticsProps {
     };
 }
 
-const Statistics = ({ orders, users, filteredUsers = [], machines, isSuperAdmin, request }: StatisticsProps) => {
+// 'machines' da bo khoi props: truoc day co nhan nhung khong dung o bat cu dau trong trang,
+// trong khi backend phai tra ve toan bo danh sach may (~0.34MB JSON) moi lan mo trang.
+const Statistics = ({ orders, users, filteredUsers = [], isSuperAdmin, request }: StatisticsProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
 
