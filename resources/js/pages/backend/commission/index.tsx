@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import CustomPagination from '@/components/custom-pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { TrendingUp, User as UserIcon, Calendar as CalendarIcon, Percent, DollarSign, RefreshCcw, Filter, UserCheck } from 'lucide-react';
+import { TrendingUp, User as UserIcon, Calendar as CalendarIcon, Percent, DollarSign, RefreshCcw, Filter, UserCheck, Wallet } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -36,6 +36,20 @@ interface IStats {
     total_paid: number;
     current_month_paid: number;
     orders_count: number;
+    total_revenue: number;
+}
+
+/** Một dòng trong bảng tổng hợp để trả tiền cuối tháng. */
+interface ISummaryRow {
+    user_id: number;
+    name: string;
+    email: string;
+    revenue: number;
+    commission: number;
+    commission_creator: number;
+    commission_manager: number;
+    rate: number;
+    orders_count: number;
 }
 
 interface IMember {
@@ -47,6 +61,7 @@ interface IMember {
 interface CommissionIndexProps {
     histories: IPaginate<ICommissionHistory>;
     stats: IStats;
+    summary: ISummaryRow[];
     allowedMembers: IMember[];
     request: { user_id?: string; month?: string };
     currentUser: { id: number; name: string; email: string; is_super_admin: boolean };
@@ -55,6 +70,7 @@ interface CommissionIndexProps {
 export default function CommissionIndex({
     histories,
     stats,
+    summary = [],
     allowedMembers = [],
     request = {},
     currentUser,
@@ -100,7 +116,20 @@ export default function CommissionIndex({
                 </div>
 
                 {/* Statistics Cards */}
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-lg border-l-4 border-l-slate-400 bg-white">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium text-slate-500">Tổng doanh thu</CardTitle>
+                            <div className="rounded-full p-2 bg-slate-50 text-slate-600">
+                                <Wallet className="h-4 w-4" />
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-slate-900">{formatVND(stats.total_revenue ?? 0)}</div>
+                            <p className="text-xs text-slate-400 mt-1">Doanh thu các đơn đã chốt hoa hồng trong kỳ đang xem</p>
+                        </CardContent>
+                    </Card>
+
                     <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-lg border-l-4 border-l-emerald-500 bg-white">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium text-slate-500">Tổng hoa hồng thực nhận</CardTitle>
@@ -191,6 +220,79 @@ export default function CommissionIndex({
                                 </Button>
                             </div>
                         </form>
+                    </CardContent>
+                </Card>
+
+                {/* Bảng tổng hợp để trả tiền: mỗi người một dòng, có tổng cuối bảng. */}
+                <Card className="bg-white border shadow-sm">
+                    <CardHeader className="py-4">
+                        <CardTitle className="text-sm font-semibold">Tổng hợp theo thành viên</CardTitle>
+                        <CardDescription className="text-xs">
+                            {request.month
+                                ? `Số liệu tháng ${request.month.split('-').reverse().join('/')}.`
+                                : 'Số liệu toàn bộ thời gian. Chọn tháng ở bộ lọc để xem riêng một tháng.'}
+                            {' '}Số tiền ở cột cuối là số phải trả cho từng người.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-4">
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Thành viên</TableHead>
+                                        <TableHead className="text-right">Số đơn</TableHead>
+                                        <TableHead className="text-right">Doanh thu</TableHead>
+                                        <TableHead className="text-right">Tỉ lệ</TableHead>
+                                        <TableHead className="text-right">Hoa hồng phải trả</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {summary.length === 0 && (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="text-center text-sm text-slate-400 py-6">
+                                                Chưa có hoa hồng nào trong kỳ này.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                    {summary.map(row => (
+                                        <TableRow key={row.user_id}>
+                                            <TableCell>
+                                                <div className="font-medium text-slate-800">{row.name}</div>
+                                                {row.email && <div className="text-[11px] text-slate-400">{row.email}</div>}
+                                                {/* Hoa hồng quản lý là tiền ăn theo đơn của cấp dưới, không sinh
+                                                    doanh thu riêng nên tách ra cho khỏi thắc mắc lệch số. */}
+                                                {row.commission_manager !== 0 && (
+                                                    <div className="text-[11px] text-violet-600">
+                                                        gồm {formatVND(row.commission_manager)} hoa hồng quản lý
+                                                    </div>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-right">{row.orders_count}</TableCell>
+                                            <TableCell className="text-right">{formatVND(row.revenue)}</TableCell>
+                                            <TableCell className="text-right">{row.rate ? `${row.rate}%` : '--'}</TableCell>
+                                            <TableCell className="text-right font-bold text-emerald-700">
+                                                {formatVND(row.commission)}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                    {summary.length > 0 && (
+                                        <TableRow className="bg-slate-50 font-bold">
+                                            <TableCell>Tổng cộng</TableCell>
+                                            <TableCell className="text-right">
+                                                {summary.reduce((s, r) => s + r.orders_count, 0)}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {formatVND(summary.reduce((s, r) => s + Number(r.revenue), 0))}
+                                            </TableCell>
+                                            <TableCell className="text-right">--</TableCell>
+                                            <TableCell className="text-right text-emerald-700">
+                                                {formatVND(summary.reduce((s, r) => s + Number(r.commission), 0))}
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </CardContent>
                 </Card>
 

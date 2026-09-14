@@ -38,4 +38,12 @@ interface CommissionServiceInterface
      * @return array
      */
     public function getStatistics(Request $request): array;
+
+    /**
+     * Bảng tổng hợp hoa hồng theo từng người, dùng để trả tiền cuối tháng.
+     *
+     * @param Request $request
+     * @return array<int,array<string,mixed>>
+     */
+    public function getSummaryByUser(Request $request): array;
 }

@@ -191,11 +191,22 @@ class CommissionService implements CommissionServiceInterface
         // Sum of all commission amounts (net paid, including negative reversals)
         $totalPaid = (float) $query->sum('commission_amount');
 
-        // Commission for the current month
-        $currentMonthPaid = (float) $this->getFilteredQuery($request)
-            ->whereYear('created_at', now()->year)
-            ->whereMonth('created_at', now()->month)
-            ->sum('commission_amount');
+        // Hoa hồng của tháng đang xem.
+        //
+        // Trước đây chỗ này lấy query ĐÃ lọc theo tháng người dùng chọn rồi lọc
+        // chồng thêm tháng hiện tại, nên chọn tháng 8 trong khi đang là tháng 9
+        // thì hai điều kiện loại trừ nhau và ô này luôn ra 0đ - đúng vào lúc cần
+        // nhất là khi trả hoa hồng của tháng trước.
+        $thangDangXem = $request->input('month');
+        if ($thangDangXem) {
+            // getFilteredQuery đã lọc đúng tháng đó rồi, không lọc thêm nữa.
+            $currentMonthPaid = $totalPaid;
+        } else {
+            $currentMonthPaid = (float) $this->getFilteredQuery($request)
+                ->whereYear('created_at', now()->year)
+                ->whereMonth('created_at', now()->month)
+                ->sum('commission_amount');
+        }
 
         // Distinct orders that received positive commission
         $ordersCount = $this->getFilteredQuery($request)
@@ -208,5 +219,73 @@ class CommissionService implements CommissionServiceInterface
             'current_month_paid' => $currentMonthPaid,
             'orders_count' => $ordersCount,
         ];
+    }
+
+    /**
+     * Bảng tổng hợp theo từng người: số đơn, doanh thu, tỉ lệ, tiền hoa hồng.
+     *
+     * Đây là bảng dùng để trả tiền cuối tháng: chọn tháng một lần là thấy đủ
+     * mọi người, thay vì phải lọc lần lượt từng thành viên rồi cộng tay.
+     *
+     * Cách cộng trừ - hai điểm dễ sai nếu gộp bằng SQL:
+     *  1. Khi huỷ đơn, hệ thống KHÔNG xoá bản ghi cũ mà thêm một bản ghi âm và
+     *     đánh dấu bản ghi gốc là 'refunded'. Vì vậy phải cộng TẤT CẢ trạng thái
+     *     thì cặp (+X gốc, -X hoàn) mới triệt tiêu về 0. Nếu chỉ lấy 'active'
+     *     thì còn mỗi bản ghi âm và ra số âm.
+     *  2. Một đơn có cấp quản lý sẽ sinh HAI bản ghi (creator + manager). Doanh
+     *     thu chỉ được tính trên bản ghi 'creator', nếu không sẽ đếm đôi.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function getSummaryByUser(Request $request): array
+    {
+        $rows = $this->getFilteredQuery($request)->with('user')->get();
+
+        $theoNguoi = [];
+
+        foreach ($rows as $r) {
+            $uid = $r->user_id;
+
+            if (!isset($theoNguoi[$uid])) {
+                $theoNguoi[$uid] = [
+                    'user_id' => $uid,
+                    'name' => $r->user->name ?? ('#' . $uid),
+                    'email' => $r->user->email ?? '',
+                    'revenue' => 0.0,
+                    'commission' => 0.0,
+                    'commission_creator' => 0.0,
+                    'commission_manager' => 0.0,
+                    'rate' => 0.0,
+                    '_orders' => [],
+                ];
+            }
+
+            $tien = (float) $r->commission_amount;
+            $dau = $tien < 0 ? -1 : 1;
+
+            $theoNguoi[$uid]['commission'] += $tien;
+
+            if ($r->type === 'manager') {
+                $theoNguoi[$uid]['commission_manager'] += $tien;
+                continue;
+            }
+
+            $theoNguoi[$uid]['commission_creator'] += $tien;
+            $theoNguoi[$uid]['revenue'] += $dau * (float) $r->order_amount;
+            $theoNguoi[$uid]['rate'] = max($theoNguoi[$uid]['rate'], (float) $r->commission_rate);
+
+            $oid = $r->booking_order_id;
+            $theoNguoi[$uid]['_orders'][$oid] = ($theoNguoi[$uid]['_orders'][$oid] ?? 0) + $dau;
+        }
+
+        // Đơn đã hoàn lại thì cặp +1/-1 triệt tiêu, không tính vào số đơn.
+        foreach ($theoNguoi as $uid => $d) {
+            $theoNguoi[$uid]['orders_count'] = count(array_filter($d['_orders'], fn($n) => $n > 0));
+            unset($theoNguoi[$uid]['_orders']);
+        }
+
+        usort($theoNguoi, fn($a, $b) => $b['commission'] <=> $a['commission']);
+
+        return array_values($theoNguoi);
     }
 }

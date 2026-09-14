@@ -28,7 +28,14 @@ class CommissionController extends Controller
         
         // Fetch statistics based on filter
         $stats = $this->commissionService->getStatistics($request);
-        
+
+        // Bảng tổng hợp theo từng người - dùng để trả tiền cuối tháng.
+        $summary = $this->commissionService->getSummaryByUser($request);
+
+        // Tổng doanh thu của các đơn đã được chốt hoa hồng trong kỳ đang xem.
+        // Cùng gốc số liệu với cột hoa hồng nên hai con số luôn khớp nhau.
+        $stats['total_revenue'] = array_sum(array_column($summary, 'revenue'));
+
         // Fetch paginated history list
         $histories = $this->commissionService->getHistory($request);
         
@@ -49,6 +56,7 @@ class CommissionController extends Controller
         return Inertia::render('backend/commission/index', [
             'histories' => $histories,
             'stats' => $stats,
+            'summary' => $summary,
             'allowedMembers' => $allowedMembers,
             'request' => $request->all(),
             'currentUser' => $user,

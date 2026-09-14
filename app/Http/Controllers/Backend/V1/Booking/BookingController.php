@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Services\Interfaces\Booking\BookingServiceInterface as BookingService;
+use App\Services\Impl\V1\Booking\RentalPriceCalculator;
 
 class BookingController extends Controller
 {
@@ -326,7 +327,9 @@ class BookingController extends Controller
             $data['image'] = $request->input('image');
         }
 
-        return DB::transaction(function () use ($data) {
+        $soTien = $this->resolveAmounts($data);
+
+        return DB::transaction(function () use ($data, $soTien) {
             // 1. Identify or Create Customer
             $customer = null;
             if (!empty($data['customer_id'])) {
@@ -380,9 +383,9 @@ class BookingController extends Controller
                 'customer_phone' => $customer?->phone ?: ($data['customer_phone'] ?? ''),
                 'customer_discount_percent' => $data['customer_discount_percent'] ?? 0,
                 'source' => $data['source'] ?? 'Khác',
-                'total_amount' => $data['total_amount'] ?? 0,
-                'discount_amount' => $data['discount_amount'] ?? 0,
-                'final_amount' => $data['final_amount'] ?? 0,
+                'total_amount' => $soTien['total'],
+                'discount_amount' => $soTien['discount'],
+                'final_amount' => $soTien['final'],
                 'deposit_info' => $data['deposit_info'],
                 'notes' => $data['notes'],
                 'image' => $data['image'] ?? null,
@@ -436,16 +439,18 @@ class BookingController extends Controller
             $data['image'] = $request->input('image');
         }
 
-        return DB::transaction(function () use ($order, $data) {
+        $soTien = $this->resolveAmounts($data);
+
+        return DB::transaction(function () use ($order, $data, $soTien) {
             $oldStatus = $order->status;
             $order->update([
                 'customer_name' => $data['customer_name'] ?? 'BẢO TRÌ',
                 'customer_phone' => $data['customer_phone'] ?? '',
                 'customer_discount_percent' => $data['customer_discount_percent'] ?? 0,
                 'source' => $data['source'] ?? 'Khác',
-                'total_amount' => $data['total_amount'] ?? 0,
-                'discount_amount' => $data['discount_amount'] ?? 0,
-                'final_amount' => $data['final_amount'] ?? 0,
+                'total_amount' => $soTien['total'],
+                'discount_amount' => $soTien['discount'],
+                'final_amount' => $soTien['final'],
                 'deposit_info' => $data['deposit_info'] ?? '',
                 'notes' => $data['notes'] ?? '',
                 'image' => $data['image'] ?? null,
@@ -549,6 +554,63 @@ class BookingController extends Controller
 
     private function nullIfNone($value) {
         return ($value === 'none' || !$value) ? null : $value;
+    }
+
+    /**
+     * Tinh lai so tien ngay tren may chu thay vi tin con so trinh duyet gui len.
+     *
+     * Truoc day store()/update() luu thang $data['total_amount'] va
+     * $data['final_amount'] tu payload, nen mot tab mo lau ngay voi ban build cu
+     * van luu duoc gia sai ma khong ai biet. Gio may chu tu tinh lai:
+     *
+     *   - total_amount : LUON la ket qua cong thuc (con so doi chieu chuan).
+     *   - final_amount : che do 'edit' thi giu nguyen gia nhan vien go tay;
+     *                    che do 'auto' thi may chu tu tru chiet khau + khuyen mai.
+     *
+     * Nghia la nhan vien van nhap tay binh thuong, chi khac la khi ho de che do
+     * tu dong thi con so khong con phu thuoc vao ban build trong trinh duyet.
+     *
+     * @return array{total: float, final: float, discount: float}
+     */
+    private function resolveAmounts(array $data): array
+    {
+        $goc = (float) ($data['total_amount'] ?? 0);
+        $cuoi = (float) ($data['final_amount'] ?? 0);
+
+        $product = !empty($data['product_id']) ? Product::find($data['product_id']) : null;
+        $periods = $data['rental_periods'] ?? [];
+
+        if (!$product || !is_array($periods) || $periods === []) {
+            return ['total' => $goc, 'final' => $cuoi, 'discount' => $goc - $cuoi];
+        }
+
+        $base = (new RentalPriceCalculator())->calculate($product, $periods)['total'];
+
+        // Nhan vien go tay -> ton trong con so ho go.
+        if (($data['pricing_mode'] ?? 'auto') === 'edit') {
+            return ['total' => $base, 'final' => $cuoi, 'discount' => $base - $cuoi];
+        }
+
+        $final = $base;
+
+        $ck = (float) ($data['customer_discount_percent'] ?? 0);
+        if ($ck > 0) {
+            $final = $final * (1 - $ck / 100);
+        }
+
+        // Payload co the di qua FormData (khi co file anh) nen boolean thanh chuoi.
+        $apDungKM = filter_var($data['apply_promotion'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        if ($apDungKM) {
+            $giaTri = (float) ($data['promotion_amount'] ?? $data['promotion_value'] ?? 0);
+            $kieu = $data['promotion_mode'] ?? $data['promotion_type'] ?? 'money';
+            $final = $kieu === 'money'
+                ? max(0, $final - $giaTri)
+                : max(0, $final - ($base * $giaTri / 100));
+        }
+
+        $final = round($final);
+
+        return ['total' => $base, 'final' => $final, 'discount' => $base - $final];
     }
 
     private function isSlotInRange($date, $slot, $period) {

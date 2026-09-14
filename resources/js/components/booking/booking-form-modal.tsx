@@ -264,7 +264,10 @@ export function BookingFormModal({
             setPromotionReason('');
         }
 
-        setPricingMode('edit');
+        // Trước đây luôn ép sang 'edit', nên chỉ cần mở lại đơn là giá đông cứng:
+        // gia hạn thêm ca thì tiền không nhảy theo nữa. Giờ tôn trọng đúng chế độ
+        // đã lưu của đơn - đơn nào vốn tính tự động thì mở lại vẫn tính tự động.
+        setPricingMode(order.pricing_mode === 'auto' ? 'auto' : 'edit');
         setManualPrice(Number(order.final_amount));
         setOverlapError(null);
         setIsSubmitting(false);
@@ -297,11 +300,11 @@ export function BookingFormModal({
         setSelectedCustomer(customer);
     };
 
+    // Mỗi ca thuê được quy về một số nguyên tăng dần: ...,  ngày N (S,C,T) = 3N, 3N+1, 3N+2.
+    // Dùng Date.UTC để số ngày không bị lệch theo múi giờ/giờ mùa của máy nhân viên.
     const getSlotValue = (date: string, slot: string) => {
         const [y, m, d] = date.split('-').map(Number);
-        const dt = new Date(y, m - 1, d);
-        dt.setHours(0, 0, 0, 0);
-        const time = Math.floor(dt.getTime() / (1000 * 60 * 60 * 24));
+        const time = Math.floor(Date.UTC(y, m - 1, d) / (1000 * 60 * 60 * 24));
         const offset = slotsList.indexOf(slot);
         return time * 3 + offset;
     };
@@ -320,14 +323,26 @@ export function BookingFormModal({
         return machines.find(m => m.id === selectedMachineId);
     }, [selectedMachineId, machines]);
 
-    const basePrice = useMemo(() => {
-        if (!selectedMachine) return 0;
+    // Kỳ thuê không hợp lệ: ca kết thúc nằm TRƯỚC ca bắt đầu (ví dụ "Tối 12/8 -> Sáng 12/8").
+    // Trước đây vòng lặp gom ca sẽ không chạy lần nào nên giá lặng lẽ ra 0đ.
+    const invalidPeriods = useMemo(() => {
+        return rentalPeriods
+            .map((p, idx) => ({ p, idx }))
+            .filter(({ p }) => {
+                if (!p.startDate || !p.endDate) return false;
+                return getSlotValue(p.endDate, p.endSlot) < getSlotValue(p.startDate, p.startSlot);
+            });
+    }, [rentalPeriods]);
+
+    const pricing = useMemo(() => {
+        const rong = { total: 0, days: 0, halfDays: 0, rate: 0, rateLabel: '', halfRate: 0, mixedRates: false };
+        if (!selectedMachine) return rong;
         const p6h = Number(selectedMachine.price_6h) || 0;
         const p1d = Number(selectedMachine.price_1d) || 0;
         const p3d = Number(selectedMachine.price_3d) || 0;
         const p7d = Number(selectedMachine.price_7d) || 0;
-        if (totalSessions === 0) return 0;
-        
+        if (totalSessions === 0 || invalidPeriods.length > 0) return rong;
+
         const allSlots = new Set<number>();
         rentalPeriods.forEach(p => {
             const start = getSlotValue(p.startDate, p.startSlot);
@@ -347,6 +362,10 @@ export function BookingFormModal({
         });
         if (currentBlock.length > 0) blocks.push(currentBlock);
         let total = 0;
+        let tongNgay = 0;
+        let tongBuoi = 0;
+        const nhanGia = new Set<string>();
+        let donGiaNgay = 0;
         blocks.forEach(block => {
             // Quy tắc tính tiền (theo bảng công thức của cửa hàng):
             //   - Ngày dùng 2 hoặc 3 ca  -> 1 ngày   (dùng đủ S+C+T vẫn chỉ 1 ngày)
@@ -375,16 +394,28 @@ export function BookingFormModal({
             billedDays += Math.floor(buoiLe / 2);
             const buoiConLai = buoiLe % 2;
 
+            tongNgay += billedDays;
+            tongBuoi += buoiConLai;
+
             if (billedDays === 0) {
                 // Cả khối chỉ có 1 ca duy nhất
                 total += p6h;
             } else {
-                // Chọn đơn giá theo số ngày tính tiền
-                const rate = billedDays >= 7
-                    ? (p7d || p3d || p1d)
-                    : billedDays >= 3
-                        ? (p3d || p1d)
-                        : p1d;
+                // Chọn đơn giá theo số ngày tính tiền.
+                // p7d/p3d bằng 0 nghĩa là máy CHƯA đặt mức giá đó, nên lùi về mức có giá.
+                // Lấy nhãn ngay tại chỗ chọn, không suy ngược từ con số: hai mức giá
+                // có thể bằng nhau nên so sánh giá trị sẽ dán nhầm nhãn.
+                let rate: number;
+                let nhan: string;
+                if (billedDays >= 7 && p7d) {
+                    rate = p7d; nhan = 'giá 7 ngày';
+                } else if (billedDays >= 3 && p3d) {
+                    rate = p3d; nhan = 'giá 3 ngày';
+                } else {
+                    rate = p1d; nhan = 'giá 1 ngày';
+                }
+                nhanGia.add(nhan);
+                donGiaNgay = rate;
                 total += billedDays * rate;
 
                 // Còn 1 buổi lẻ chưa ghép được thì cộng thêm giá 6h
@@ -393,8 +424,20 @@ export function BookingFormModal({
                 }
             }
         });
-        return total;
-    }, [totalSessions, selectedMachine, rentalPeriods]);
+        return {
+            total,
+            days: tongNgay,
+            halfDays: tongBuoi,
+            rate: donGiaNgay,
+            rateLabel: nhanGia.size === 1 ? Array.from(nhanGia)[0] : '',
+            halfRate: p6h,
+            // Thuê nhiều đợt rơi vào các mức giá khác nhau thì không có một đơn giá
+            // chung để nhân ra, lúc đó chỉ hiện số ngày/buổi chứ không hiện dòng nhân.
+            mixedRates: nhanGia.size > 1,
+        };
+    }, [totalSessions, selectedMachine, rentalPeriods, invalidPeriods]);
+
+    const basePrice = pricing.total;
 
     const calculatedPrice = useMemo(() => {
         let price = basePrice;
@@ -726,6 +769,23 @@ export function BookingFormModal({
                                     </div>
                                 ))}
                             </div>
+
+                            {/* Trước đây overlapError chỉ làm mờ nút Lưu mà không nói lý do. */}
+                            {invalidPeriods.length > 0 && (
+                                <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+                                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                                    <span>
+                                        Ca kết thúc đang nằm trước ca bắt đầu. Hãy chọn lại mốc thời gian thuê
+                                        (ví dụ "Tối 12/8 → Sáng 13/8", không phải "Tối 12/8 → Sáng 12/8").
+                                    </span>
+                                </div>
+                            )}
+                            {overlapError && (
+                                <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                                    <span>{overlapError}</span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="col-span-12 space-y-2">
@@ -792,7 +852,32 @@ export function BookingFormModal({
                                                     </div>
                                                     
                                                     {/* Price Breakdown */}
-                                                    <div className="bg-white/50 border border-slate-200/50 rounded-lg p-2 space-y-1 w-full max-w-[200px] shadow-sm text-left">
+                                                    <div className="bg-white/50 border border-slate-200/50 rounded-lg p-2 space-y-1 w-full max-w-[240px] shadow-sm text-left">
+                                                        {/* Diễn giải cách ra số tiền, để đối chiếu với bảng giá của cửa hàng:
+                                                            2-3 ca trong cùng một ngày = 1 ngày, 1 ca lẻ = 1 buổi,
+                                                            2 buổi lẻ ghép lại thành 1 ngày. */}
+                                                        {(pricing.days > 0 || pricing.halfDays > 0) && (
+                                                            <div className="text-[10px] text-slate-600 border-b border-slate-100 pb-1 mb-1">
+                                                                <div className="font-bold text-slate-700">
+                                                                    Tính:{' '}
+                                                                    {pricing.days > 0 && `${pricing.days} ngày`}
+                                                                    {pricing.days > 0 && pricing.halfDays > 0 && ' + '}
+                                                                    {pricing.halfDays > 0 && `${pricing.halfDays} buổi`}
+                                                                </div>
+                                                                {pricing.days > 0 && !pricing.mixedRates && (
+                                                                    <div className="flex justify-between">
+                                                                        <span>{pricing.days} ngày x {pricing.rateLabel}</span>
+                                                                        <span>{new Intl.NumberFormat('vi-VN').format(Math.round(pricing.days * pricing.rate))}đ</span>
+                                                                    </div>
+                                                                )}
+                                                                {pricing.halfDays > 0 && !pricing.mixedRates && (
+                                                                    <div className="flex justify-between">
+                                                                        <span>{pricing.halfDays} buổi x giá 6h</span>
+                                                                        <span>{new Intl.NumberFormat('vi-VN').format(Math.round(pricing.halfDays * pricing.halfRate))}đ</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                         <div className="flex justify-between text-[10px] text-slate-500">
                                                             <span>Tạm tính:</span>
                                                             <span className="font-medium">{new Intl.NumberFormat('vi-VN').format(Math.round(basePrice))}đ</span>
@@ -951,7 +1036,7 @@ export function BookingFormModal({
                     </div>
 
                     <div className="flex gap-3 pt-4">
-                        <Button className="flex-1 bg-[#0088FF] h-12 text-base font-bold shadow-lg" disabled={isSubmitting || !!overlapError} onClick={handleSaveBooking}>
+                        <Button className="flex-1 bg-[#0088FF] h-12 text-base font-bold shadow-lg" disabled={isSubmitting || !!overlapError || invalidPeriods.length > 0} onClick={handleSaveBooking}>
                             {isSubmitting ? 'Đang lưu...' : editingOrderId ? 'Cập nhật đơn hàng' : 'Tạo đơn hàng'}
                         </Button>
                         <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1 h-12 text-base font-bold border-slate-200">
