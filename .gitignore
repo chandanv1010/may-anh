@@ -40,3 +40,7 @@ yarn-error.log
 /scratch/
 # Dump CSDL dung de dung moi truong chay thu tren may ca nhan
 /sql_mayanh_webch.sql
+
+# Moi truong chay thu tren may ca nhan - khong day len host
+/docker-compose.yml
+/docker
