@@ -38,3 +38,5 @@ yarn-error.log
 *.log
 /public/storage/
 /scratch/
+# Dump CSDL dung de dung moi truong chay thu tren may ca nhan
+/sql_mayanh_webch.sql

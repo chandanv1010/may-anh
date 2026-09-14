@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Services\Impl\V1\Booking\RentalPriceCalculator;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -51,9 +52,9 @@ class RentalPriceCalculatorTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider bangCongThuc
-     */
+    // PHPUnit 12 khong con doc annotation @dataProvider, phai dung attribute.
+    // Neu dung annotation thi test nay LANG LE khong chay dong nao.
+    #[DataProvider('bangCongThuc')]
     public function test_khop_bang_cong_thuc_cua_cua_hang(
         string $sCa, string $sNgay, string $eCa, string $eNgay, int $ngay, int $buoi
     ): void {

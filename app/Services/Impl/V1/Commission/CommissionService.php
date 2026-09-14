@@ -222,6 +222,48 @@ class CommissionService implements CommissionServiceInterface
     }
 
     /**
+     * Những người có chốt đơn hoàn tất nhưng nhóm của họ chưa đặt tỉ lệ hoa hồng.
+     *
+     * Hoa hồng chỉ được ghi khi số tiền tính ra lớn hơn 0, nên người chưa gán
+     * nhóm (hoặc nhóm để tỉ lệ 0%) sẽ KHÔNG có bản ghi nào và biến mất khỏi bảng
+     * tổng hợp - chủ cửa hàng không có cách nào nhận ra là đang sót người.
+     *
+     * @return array<int,array{name:string,orders_count:int,revenue:float}>
+     */
+    public function getUsersMissingRate(): array
+    {
+        $rows = BookingOrder::query()
+            ->where('status', 'finished')
+            ->whereNotNull('staff_chot_id')
+            ->selectRaw('staff_chot_id, COUNT(*) as so_don, SUM(final_amount) as doanh_thu')
+            ->groupBy('staff_chot_id')
+            ->get();
+
+        $ra = [];
+
+        foreach ($rows as $r) {
+            $u = User::with('user_catalogues')->find($r->staff_chot_id);
+            if (!$u) {
+                continue;
+            }
+
+            if ((float) $u->user_catalogues->max('commission_rate') > 0) {
+                continue;
+            }
+
+            $ra[] = [
+                'name' => $u->name,
+                'orders_count' => (int) $r->so_don,
+                'revenue' => (float) $r->doanh_thu,
+            ];
+        }
+
+        usort($ra, fn($a, $b) => $b['revenue'] <=> $a['revenue']);
+
+        return $ra;
+    }
+
+    /**
      * Bảng tổng hợp theo từng người: số đơn, doanh thu, tỉ lệ, tiền hoa hồng.
      *
      * Đây là bảng dùng để trả tiền cuối tháng: chọn tháng một lần là thấy đủ

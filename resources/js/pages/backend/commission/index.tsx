@@ -58,10 +58,18 @@ interface IMember {
     email: string;
 }
 
+/** Nguoi co chot don nhung nhom chua dat ti le hoa hong. */
+interface IMissingRate {
+    name: string;
+    orders_count: number;
+    revenue: number;
+}
+
 interface CommissionIndexProps {
     histories: IPaginate<ICommissionHistory>;
     stats: IStats;
     summary: ISummaryRow[];
+    missingRate: IMissingRate[];
     allowedMembers: IMember[];
     request: { user_id?: string; month?: string };
     currentUser: { id: number; name: string; email: string; is_super_admin: boolean };
@@ -71,6 +79,7 @@ export default function CommissionIndex({
     histories,
     stats,
     summary = [],
+    missingRate = [],
     allowedMembers = [],
     request = {},
     currentUser,
@@ -145,14 +154,18 @@ export default function CommissionIndex({
 
                     <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-lg border-l-4 border-l-blue-500 bg-white">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-500">Hoa hồng tháng hiện tại</CardTitle>
+                            {/* Trước đây ô này là "Hoa hồng tháng hiện tại". Sau khi bộ lọc tháng
+                                chạy đúng thì nó lặp lại y hệt ô "Tổng hoa hồng thực nhận", mà nhãn
+                                lại nói "tháng này" trong khi đang xem tháng cũ. Đổi sang số người
+                                cần trả - vừa không trùng, vừa là thứ cần biết khi chia tiền. */}
+                            <CardTitle className="text-sm font-medium text-slate-500">Số người cần trả</CardTitle>
                             <div className="rounded-full p-2 bg-blue-50 text-blue-600">
                                 <TrendingUp className="h-4 w-4" />
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-slate-900">{formatVND(stats.current_month_paid)}</div>
-                            <p className="text-xs text-slate-400 mt-1">Số liệu tính đến hiện tại của tháng này</p>
+                            <div className="text-2xl font-bold text-slate-900">{summary.length} người</div>
+                            <p className="text-xs text-slate-400 mt-1">Có phát sinh hoa hồng trong kỳ đang xem</p>
                         </CardContent>
                     </Card>
 
@@ -222,6 +235,33 @@ export default function CommissionIndex({
                         </form>
                     </CardContent>
                 </Card>
+
+                {/* Người chốt đơn mà nhóm chưa đặt tỉ lệ thì hoa hồng = 0 nên KHÔNG
+                    sinh bản ghi nào, tức là họ biến mất khỏi bảng bên dưới. Không có
+                    dòng cảnh báo này thì chủ cửa hàng không có cách nào biết đang sót người. */}
+                {missingRate.length > 0 && (
+                    <Card className="border-amber-200 bg-amber-50">
+                        <CardHeader className="py-3">
+                            <CardTitle className="text-sm font-semibold text-amber-900">
+                                Có người chốt đơn nhưng chưa được tính hoa hồng
+                            </CardTitle>
+                            <CardDescription className="text-xs text-amber-800">
+                                Nhóm của những người này chưa đặt tỉ lệ hoa hồng, nên họ không xuất hiện
+                                trong bảng bên dưới. Vào Thành viên &gt; Nhóm thành viên để đặt tỉ lệ.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pb-3">
+                            <ul className="space-y-1 text-xs text-amber-900">
+                                {missingRate.map(m => (
+                                    <li key={m.name}>
+                                        <span className="font-semibold">{m.name}</span>
+                                        {' — '}{m.orders_count} đơn hoàn tất, doanh thu {formatVND(m.revenue)}
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Bảng tổng hợp để trả tiền: mỗi người một dòng, có tổng cuối bảng. */}
                 <Card className="bg-white border shadow-sm">

@@ -46,4 +46,11 @@ interface CommissionServiceInterface
      * @return array<int,array<string,mixed>>
      */
     public function getSummaryByUser(Request $request): array;
+
+    /**
+     * Nhung nguoi co chot don nhung nhom chua dat ti le hoa hong.
+     *
+     * @return array<int,array{name:string,orders_count:int,revenue:float}>
+     */
+    public function getUsersMissingRate(): array;
 }

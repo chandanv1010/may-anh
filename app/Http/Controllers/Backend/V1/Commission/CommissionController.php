@@ -36,6 +36,13 @@ class CommissionController extends Controller
         // Cùng gốc số liệu với cột hoa hồng nên hai con số luôn khớp nhau.
         $stats['total_revenue'] = array_sum(array_column($summary, 'revenue'));
 
+        // Người có chốt đơn nhưng chưa được gán tỉ lệ -> báo để khỏi sót khi trả tiền.
+        // Chỉ superadmin thấy: đây là chuyện cấu hình tài khoản của cả cửa hàng,
+        // không phải việc của từng cộng tác viên.
+        $missingRate = $user->isSuperAdmin()
+            ? $this->commissionService->getUsersMissingRate()
+            : [];
+
         // Fetch paginated history list
         $histories = $this->commissionService->getHistory($request);
         
@@ -57,6 +64,7 @@ class CommissionController extends Controller
             'histories' => $histories,
             'stats' => $stats,
             'summary' => $summary,
+            'missingRate' => $missingRate,
             'allowedMembers' => $allowedMembers,
             'request' => $request->all(),
             'currentUser' => $user,
