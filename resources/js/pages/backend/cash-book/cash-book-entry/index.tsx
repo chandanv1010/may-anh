@@ -251,7 +251,7 @@ export default function CashBookEntryIndex({ records, statistics, request }: Cas
                         description={pageConfig.cardDescription}
                     >
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
                                     <Button
                                         onClick={() => router.get('/backend/cash-book/create?type=income')}

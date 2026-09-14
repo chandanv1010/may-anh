@@ -200,7 +200,7 @@ export default function WidgetIndex({ widgets }: IWidgetIndexProps) {
                         }
                     >
                         <div className="flex flex-col mb-[10px]">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
                                 <div className="flex items-center justify-center">
                                     <CustomFilter filters={filters} />
                                 </div>

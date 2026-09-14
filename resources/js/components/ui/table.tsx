@@ -6,8 +6,13 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full"
-      // Xóa overflow-x-auto để không có thanh cuộn ngang, text sẽ tự động wrap
+      // Có overflow-x-auto thì trên màn hình hẹp bảng mới cuộn ngang được.
+      // Trước đây chỗ này bị gỡ đi với ý "để chữ tự wrap", nhưng những ô không
+      // co lại được (nút Sửa/Xoá, ảnh, ngày tháng) vẫn tràn ra - mà lớp bọc
+      // ngoài lại là overflow-hidden nên chúng bị cắt cụt và không có cách nào
+      // kéo tới xem. Chữ vẫn wrap như cũ; thanh cuộn chỉ xuất hiện khi thật sự
+      // không đủ chỗ.
+      className="relative w-full overflow-x-auto"
     >
       <table
         data-slot="table"

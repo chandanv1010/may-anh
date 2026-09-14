@@ -28,8 +28,13 @@ const CustomTable = <T, >({
     render
 }: ICustomTable<T>) => {
     return (
+        // overflow-hidden ở đây chỉ để bo tròn 4 góc; phần cuộn ngang nằm ở
+        // container bên trong của <Table>, nên nó không cắt mất nội dung nữa.
         <div className="overflow-hidden rounded-[5px] border">
-            <Table className="rounded-[5px]">
+            {/* Trên màn hình hẹp, ép bảng giữ bề ngang tối thiểu rồi cho cuộn,
+                thay vì bóp các cột lại đến mức không đọc được. Trên màn hình
+                rộng con số này không có tác dụng gì vì bảng vốn đã rộng hơn. */}
+            <Table className="min-w-[900px] rounded-[5px]">
                 <TableHeader className="bg-gray-200">
                 <TableRow>
                     {columns && columns.map(col => (

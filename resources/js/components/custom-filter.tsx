@@ -241,7 +241,12 @@ const CustomFilter = ({
             }}
         >
             {({ processing }) => (
-                <div className="flex">
+                // flex-wrap: cac o loc deu co chieu rong co dinh (180px, 300px...)
+                // nen tren man hinh hep chung day nhau tran ra ngoai, keo theo ca
+                // nut Tim kiem va nut Them ban ghi moi ra khoi man hinh. Cho phep
+                // xuong dong thi moi thu deu nhin thay va bam duoc.
+                // gap-y-2: cac hang sau khi xuong dong khong bi dinh vao nhau.
+                <div className="flex flex-wrap gap-y-2">
                     {filters && filters.map(filter =>
                         filter.type === 'single' ? (
                             <Select
@@ -288,7 +293,7 @@ const CustomFilter = ({
                         name="keyword"
                         type="text"
                         placeholder="Nhập từ khóa muốn tìm kiếm"
-                        className="w-[300px] text-[8px] rounded-[5px] mr-[10px]"
+                        className="w-full sm:w-[300px] text-[8px] rounded-[5px] mr-[10px]"
                         defaultValue={request?.keyword ? String(request.keyword) : ''}
                     />
                     <Button className="rounded-[5px] cursor-pointer bg-[#0088FF] hover:bg-[#0088FF]/80 font-light flex items-center">
