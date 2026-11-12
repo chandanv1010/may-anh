@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import CustomPagination from '@/components/custom-pagination';
+import MonthPicker from '@/components/month-picker';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TrendingUp, User as UserIcon, Calendar as CalendarIcon, Percent, DollarSign, RefreshCcw, Filter, UserCheck, Wallet } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -99,6 +100,14 @@ export default function CommissionIndex({
             user_id: userId,
             month: month,
         }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const chonThang = (thang: string) => {
+        setMonth(thang);
+        router.get('/backend/commission', { user_id: userId, month: thang }, {
             preserveState: true,
             preserveScroll: true,
         });
@@ -212,15 +221,10 @@ export default function CommissionIndex({
                                 </div>
                             )}
 
-                            <div className="space-y-1.5 flex-1 min-w-[200px]">
+                            <div className="space-y-1.5 flex-1 min-w-[260px]">
                                 <Label htmlFor="month-filter" className="text-xs font-semibold text-slate-600">Chọn tháng</Label>
-                                <input
-                                    id="month-filter"
-                                    type="month"
-                                    value={month}
-                                    onChange={(e) => setMonth(e.target.value)}
-                                    className="w-full h-9 rounded-md border border-slate-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-slate-400"
-                                />
+                                {/* Chọn tháng là lọc luôn, không cần bấm "Áp dụng". */}
+                                <MonthPicker id="month-filter" value={month} onChange={chonThang} />
                             </div>
 
                             <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">

@@ -351,7 +351,9 @@ const Statistics = ({ orders, users, filteredUsers = [], isSuperAdmin, request }
                         <CardContent className="p-5 flex items-center space-x-4">
                             <div className="p-3 bg-blue-50 rounded-lg text-blue-600"><TrendingUp size={20} /></div>
                             <div>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng doanh thu</p>
+                                {/* Cộng NGUYÊN tiền mọi đơn có ít nhất 1 ca trong tháng: đơn vắt
+                                    qua 2 tháng bị tính ở cả 2 tháng, nên không phải doanh thu tháng. */}
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng giá trị đơn có thuê trong tháng</p>
                                 <h3 className="text-xl font-black text-slate-900">{formatCurrency(metrics.total)}</h3>
                             </div>
                         </CardContent>
@@ -360,7 +362,9 @@ const Statistics = ({ orders, users, filteredUsers = [], isSuperAdmin, request }
                         <CardContent className="p-5 flex items-center space-x-4">
                             <div className="p-3 bg-emerald-50 rounded-lg text-emerald-600"><DollarSign size={20} /></div>
                             <div>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Thực nhận (Sau KM)</p>
+                                {/* Tiền đơn chia theo số ca rơi vào tháng đang xem - đây mới là doanh
+                                    thu của tháng. Cả hai ô đều đã trừ khuyến mãi (final_amount). */}
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Doanh thu của tháng</p>
                                 <h3 className="text-xl font-black text-slate-900">{formatCurrency(metrics.final)}</h3>
                             </div>
                         </CardContent>
