@@ -123,10 +123,19 @@ const BookingInfoPopover = ({ booking, machineName, users, onEdit }: { booking: 
                 )}
             </div>
 
+            {onEdit && (
+                <div className="px-3 pb-3">
+                    <button
+                        onClick={onEdit}
+                        className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded-lg transition-colors"
+                    >
+                        ✏️ Sửa đơn{booking.booking_order_id ? ` #${booking.booking_order_id}` : ''}
+                    </button>
+                </div>
+            )}
+
             <div className="px-3 py-2 bg-amber-50/50 text-[9px] text-center text-amber-900/40 font-medium italic border-t border-amber-100">
                 {machineName} • {format(new Date(booking.booking_date), 'dd/MM/yyyy')}
-                <br/>
-                Click đúp để chỉnh sửa đơn hàng
             </div>
         </div>
     );
@@ -643,13 +652,23 @@ const CalendarGrid = React.memo(({ days, slots, machines, users, findBooking, ge
                                     // → mobile có thể tap 1 lần để xem/sửa (không cần double-tap)
                                     const showPopover = !!(booking && hasPermission);
 
+                                    // Ô liền trước (buổi trước cùng ngày, hoặc buổi cuối ngày hôm trước).
+                                    // Nếu là đơn khác → kẻ vạch ngăn để 2 đơn cùng màu không dính thành 1 khối.
+                                    const prevBooking = booking?.booking_order_id
+                                        ? (sIdx > 0
+                                            ? findBooking(machine.id, day, slots[sIdx - 1])
+                                            : (dIdx > 0 ? findBooking(machine.id, days[dIdx - 1], slots[slots.length - 1]) : null))
+                                        : null;
+                                    const startsNewOrder = !!(prevBooking?.booking_order_id && prevBooking.booking_order_id !== booking.booking_order_id);
+
                                     const innerBlock = (extraHandlers?: any) => (
                                         <div className="relative w-full h-full min-h-[22px]">
-                                            <div 
+                                            <div
                                                 className="absolute inset-0 flex items-center justify-center transition-all"
                                                 style={{
                                                     backgroundColor: cellColor,
-                                                }} 
+                                                    boxShadow: startsNewOrder ? 'inset 3px 0 0 #0f172a' : undefined,
+                                                }}
                                                 {...extraHandlers}
                                             >
                                                 {booking && booking.status === 'maintenance' && (
